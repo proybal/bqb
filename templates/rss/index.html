@@ -1,0 +1,48 @@
+{% extends 'rss/base.html' %}
+{% load static %}
+
+{% block styles %}
+{#    <link rel="shortcut icon" href="{% static '/pages/cholo.ico' %}"/>#}
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+          integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+{#    <link rel="stylesheet" type="text/css" href="{% static 'pages/css/styles.css' %}">#}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
+    <style>
+    H1,H2 {
+      font-family: "Sofia", sans-serif;
+      font-size: 50pt;
+      font-style: italic;
+      text-shadow: 3px 3px 3px #ababab;
+        margin-left: 20%;
+            }
+
+ </style>
+{% endblock styles %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+<div class="row" style="padding-left: 10px">
+    <div class="col">
+{% for entry in feed.entries %}
+    <a  style="font-size: 18pt; padding-left: 0; color: black" href="{{ entry.link }}">{{ entry.title }}</a>
+    <p style="font-size: 12pt">Published: {{ entry.published }} Updated: {{ entry.updated }}</p>
+    <p style="font-size: 12pt">Source: {{ entry.author }}</p>
+    <p>{{ entry.description }}</p>
+    <hr>
+{% endfor %}
+    </div>
+</div>
+
+{% endblock body %}
+
+{% block footer %}
+ <footer class="footer">
+      <div class="container">
+        <p class="text-muted">burquebro.com 2021 by paul roybal</p>
+      </div>
+    </footer>
+{% endblock footer %}

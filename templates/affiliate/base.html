@@ -1,0 +1,46 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            {% block title %}
+                'Burque Bro
+            {% endblock %}
+        </title>
+        <link rel="shortcut icon" href="{% static 'pages/favicon.ico' %}" type="img/ico "/>
+        {% include 'navbar.html' %}
+        {% block styles %}
+            <style>
+            body {
+            background-image: url({% static 'pages/cfiles26020.jpg' %});
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+}
+            </style>
+            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+                  integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+            <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+            <link rel="stylesheet" type="text/css" href="{% static '/pages/css/styles.css' %}">
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
+
+        {% endblock %}
+
+        {% block scripts %}
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+                    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+                    crossorigin="anonymous"></script>
+        {% endblock scripts %}
+    </head>
+    <body>
+        {% block body %}
+
+        {% endblock body %}
+    </body>
+    <footer>
+        {% block footer %}
+
+        {% endblock footer %}
+    </footer>
+</html>
