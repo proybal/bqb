@@ -1,0 +1,49 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+
+{% block head %}
+    <title>Things to do in 'burque</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+{% endblock head %}
+
+
+{% block body %}
+    <div class="jumbotron">
+        <h1>Things to do in 'burque</h1>
+        {#           <a href="/" class="btn btn-danger">Refresh News</a>#}
+        {#        </form>#}
+    </div>
+    <div class="container">
+        {#        <div class="row">#}
+        {#            <div class="col-6">#}
+        {% for n in todo_news %}
+            <div class="card h-25">
+                {#                    <h5>{{n.img}}</h5>#}
+
+                <img src="{{ n.img }}" width="50%" height="50%" alt="img">
+                <h5>{{ n.text }}</h5>
+                <a href="{{ n.url }}"></a>
+                {#        <h5>{{ n }}</h5>#}
+                {#                    <h5> -  {{n}} </h5>#}
+            </div>
+        {% endfor %}
+        {#            </div>#}
+        {#        </div>#}
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    <script
+            src="http://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+    </body>
+{% endblock %}
