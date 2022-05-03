@@ -1,6 +1,11 @@
 {% extends 'pages/base.html' %}
 {% load static %}
 
+{% block style %}
+    <style></style>
+
+{% endblock %}
+
 {% block head %}
     <title>Things to do in 'burque</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
@@ -8,29 +13,40 @@
 {% endblock head %}
 
 
-{% block body %}
-    <div class="jumbotron">
-        <h1>Things to do in 'burque</h1>
-        {#           <a href="/" class="btn btn-danger">Refresh News</a>#}
-        {#        </form>#}
-    </div>
-    <div class="container">
-        {#        <div class="row">#}
-        {#            <div class="col-6">#}
-        {% for n in todo_news %}
-            <div class="card h-25">
-                {#                    <h5>{{n.img}}</h5>#}
 
-                <img src="{{ n.img }}" width="50%" height="50%" alt="img">
-                <h5>{{ n.text }}</h5>
-                <a href="{{ n.url }}"></a>
-                {#        <h5>{{ n }}</h5>#}
-                {#                    <h5> -  {{n}} </h5>#}
-            </div>
-        {% endfor %}
-        {#            </div>#}
-        {#        </div>#}
+{% block body %}
+    <div class="brand">
+        <h6>Things to do in 'burque</h6>
     </div>
+    <div style="height: 20px;"></div>
+    {% for n in todo_news %}
+        <div class="card mx-auto" style="width: 80%;">
+        <div class="row">
+            <div class="col ms-5">
+                <div style="height: 10px;"></div>
+                                <div style="margin-left: 10px">
+                <a href="{{ n.url }}"><h5>{{ n.title }}</h5></a>
+                <a href="{{ n.url }}"> <img src="{{ n.img }}" width="60%" alt="img"></a>
+                <div style="height: 10px;"></div>
+                <h6>{{ n.text }}</h6>
+                                </div>
+            </div>
+            <div class="col">
+                <div style="height: 50px;"></div>
+                <p><h6>MAP</h6></p>
+                <iframe width="50%" src="{{ n.map }}"></iframe>
+                <div style="height: 50px;"></div>
+                <p><h6>DATE/TIME</h6></p>
+
+
+            </div>
+        </div>
+        <div style="height: 20px;"></div>
+        </div>
+        <div style="height: 20px;"></div>
+    {% endfor %}
+
+</div>
 
 {% endblock %}
 

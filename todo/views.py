@@ -3,74 +3,105 @@ import shutil
 from django.shortcuts import render
 import requests
 from bs4 import BeautifulSoup
+import datetime
 
-# GEtting todo albuquerquetodo.com
+from dateutil.parser import parse
+
+
+# todo albuquerquetodo.com
+
 def index(req):
+    def get_date(str):
+
+        def get_datetime(str, index):
+            event_str = str
+            i = index
+            d = event_str.find(',', i)
+            dow = event_str[i:d]
+            M = event_str.find(',', d + 2)
+            mon = event_str[d + 2:M]
+            t = event_str[M + 2:event_str.find(' ', M + 2)]
+            d = parse(mon + ' ' + t)
+            return (d, t)
+
+        event_date = ""
+        event_str = str
+        event_str = event_str.replace("\n", "")
+        event_str = " ".join(event_str.split())
+        event_str = event_str[event_str.find('TIMES') + 6:event_str.find('WEBSITE') - 1]
+        event_date = datetime.datetime(2099,12,31)
+        event_dates  = []
+        event_end_dates = []
+        i = event_str.find('Event Date :')
+        if i != -1:
+            event_found = True
+            while event_found:
+                k = event_str.find('Event Date :', i + 2)
+                if k != -1:
+                    j = k
+                else:
+                    event_found = False
+                    j = len(event_str)
+                i += 12
+                d, t = get_datetime(event_str, i)
+                i = j
+                current_time = datetime.datetime.now()
+                if current_time <= d <= event_date:
+                    event_date = d
+                else:
+                    if event_date != datetime.datetime(2099,12,31):
+                        event_date = d
+                event_dates.append(d)
+                event_end_dates.append(d)
+        else:
+            i = event_str.find('Event Start Date :')
+            if i != -1:
+                k = event_str.find('Event End Date:')
+                if k != -1:
+                    j = k
+                    d, t = get_datetime(event_str, i)
+                    event_date = d
+                    event_dates.append(d)
+
+                    i = j
+                    d, t = get_datetime(event_str, i)
+                    event_end_dates.append(d)
+
+        return event_date, event_dates, event_end_dates
 
     todo_r = requests.get("https://www.abqtodo.com")
     todo_soup = BeautifulSoup(todo_r.content, 'html5lib')
-    children = todo_soup.findChildren()
-    # print(children)
-
-    # todo_headings = todo_soup.find_all('h2')
-    #todo_headings = todo_soup.findAll("div", {"class": "blog-post"}, limit=1)
-    todo_headings = todo_soup.findAll("div", {"class": "blog-post"})
-    images = todo_soup.findAll('img', {'class': 'blog-thumb'})
-    href = todo_soup.findAll("a")
-    print(todo_headings)
-    x = 0
-    img = []
-    for i in images:
-    #    print(i.attrs['src'])
-        if x > 0:
-            url = i.attrs['src']
-            img.append(i.attrs['src'])
-    #        r = requests.get(url, stream=True)
-     #        if r.status_code == 200:
-     #            r.raw.decode_content = True
-     # #           print(r)
-        x+=1
-
-    #print(todo_headings)
-    #todo_headings = todo_soup.findAll("h2")
-    #print(todo_headings)
-    #print(todo_soup.prettify())
-    #todo_headings = todo_headings[0:-13] # removing footers
-
+    href = todo_soup.select('.blog-post .blog-thumb a[href]')
+    title_tags = todo_soup.select(".blog-post .blog-title")
+    thumb_tags = todo_soup.select(".blog-post .blog-thumb img")
+    meta_tags = todo_soup.select(".blog-post .blog-post-meta")
+    meta = [mt.get_text() for mt in meta_tags]
+    text = [t.get_text() for t in title_tags]
+    title = [mt.get_text() for mt in meta_tags]
+    thumbs = [t.attrs['src'] for t in thumb_tags]
     todo_news = []
-    urls = []
-    x = 0
-    for th in todo_headings:
-        i=images[x]
-        url = i.attrs['src']
-        urls.append(i.attrs['src'])
-        try:
-            r = requests.get(url, stream=True)
-            if r.status_code == 200:
-                r.raw.decode_content = True
-                # print(r)
-                dict = {'text': th.text, 'url': urls, 'img': img[x]}
-                todo_news.append(dict)
-        except:
-            print(url)
-        x+=1
+    for x in range(0, len(meta)):
+        todo_r = requests.get(href[x]['href'])
+        todo_soup = BeautifulSoup(todo_r.content, 'html5lib')
+        url = todo_soup.select(".row p a")
+        url = url[0]['href']
+        title = todo_soup.select(".row H1")
+        title = title[0].get_text()
+        event_str = todo_soup.select(".row")
+        event_str = event_str[0].get_text().strip()
+        event_str = event_str.replace("\n", "")
+        event_date = False
+        event_dates = []
+        event_end_dates = []
+        event_date, event_dates, event_end_dates = get_date(event_str)
+        google_map = todo_soup.select("iframe")
+        google_map = google_map[0]['src']
+        todo_dates = []
+        todo_date = {}
+        for x in event_dates:
+            todo_date = {'date': datetime.datetime.strftime(event_dates[x]), 'enddate': datetime.datetime.strftime(event_end_dates[x])}
+        todo_dates.append(todo_date)
+        todo_dict = {'title': title, 'dates': todo_dates, 'text': text[x], 'url': url, 'img': thumbs[x], 'map': google_map}
+        todo_news.append(todo_dict)
 
-
-
-    #Getting todo from Hindustan times
-
-    # ht_r = requests.get("https://www.abqjournal.com/")
-    # ht_soup = BeautifulSoup(ht_r.content, 'html5lib')
-    # ht_headings = ht_soup.findAll("div", {"class": "article-container"})
-    # ht_headings = ht_headings[2:]
-    #print(ht_soup.prettify())
-    # ht_news = []
-    #
-    # for hth in ht_headings:
-    #
-    #     ht_news.append(hth.text)
-     #   print(hth)
-
-
-#   print(todo_news)
-    return render(req, 'todo/index.html', {'todo_news':todo_news,'img': url })
+    return render(req, 'todo/index.html', {'todo_news': todo_news, 'img': thumbs, 'start': event_dates, 'end': event_end_dates})
