@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'slideshow',
     'blog',
     'todo',
+    'news',
 ]
 
 MIDDLEWARE = [

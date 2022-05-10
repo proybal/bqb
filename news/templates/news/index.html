@@ -6,47 +6,39 @@
 
 {% endblock %}
 
-{% block title %}
-    <title>Things to do in 'burque</title>
+{% block head %}
+    <title>Albuquerque News</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-{% endblock title %}
+{% endblock head %}
 
 
 
 {% block body %}
-    <div style="height: 10px;"></div>
-    <div class="brand sticky-top" style="text-align: center; font-size: xx-large">
-        <h6 style="text-align: center">Things to do in 'burque</h6>
+    <div class="sticky-top" style="text-align: center; color: blue; font-size: large">
+        <span><h6 style="font-size: large">Albuquerque News</h6></span>
     </div>
     <div style="height: 20px;"></div>
-    {% for n in todo_news %}
-        <div class="card mx-auto" style="background-color: lightgray; width: 80%">
-            <div class="row">
-                <div class="col ms-5">
+    {% for n in news %}
+        <div class="container-sm py-3 my-3">
+            <div class="card mx-auto" style="width: 80%; background-color: lightgray">
+                <div class="card-body">
+                <div style="margin-left: 10px">
+                    <a href="{{ n.url }}" style="color: black"><h6>{{ n.title }}</h6></a>
+                    <a href="{{ n.img }}"> <img src="{{ n.img }}" width="200px" alt="img"></a>
+                    <br>
+                    <a href="{{ n.source }}" style="color: black; font-size: x-small">
+                        <h8>Source</h8>
+                    </a>
                     <div style="height: 10px;"></div>
-                    <div style="margin-left: 10px">
-                        <a href="{{ n.url }}"><h5>{{ n.title }}</h5></a>
-                        <a href="{{ n.url }}"> <img src="{{ n.img }}" width="60%" alt="img"></a>
-                        <div style="height: 10px;"></div>
-                    </div>
+                    <p style="font-size: small">{{ n.body }}</p>
+                    <p style="font-size: x-small">Published: {{ n.published }} Updated: {{ n.updated }}</p>
                 </div>
-                <div class="col">
-                    <div style="height: 50px;"></div>
-                    <h10>DATE/TIME</h10>
-                    {% for d in n.dates %}
-                        <div style="font-size: 12pt">
-                            {{ d.date }} {{ d.enddate }}
-                        </div>
-                    {% endfor %}
                 </div>
-            </div>
-            <div class="row">
-                <h6>{{ n.text }}</h6>
+                <div style="height: 20px;"></div>
             </div>
             <div style="height: 20px;"></div>
         </div>
-        <div style="height: 20px;"></div>
     {% endfor %}
 
     </div>

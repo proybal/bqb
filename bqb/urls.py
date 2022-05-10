@@ -32,6 +32,7 @@ urlpatterns = [
     path('activate/<slug:uidb64>/<slug:token>/', activate, name='activate'),
     path('', include('blog.urls')),
     path('', include('todo.urls')),
+    path('', include('news.urls')),
 ]
 
 if settings.DEBUG: 
