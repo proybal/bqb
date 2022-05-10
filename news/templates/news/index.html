@@ -22,18 +22,20 @@
     {% for n in news %}
         <div class="container-sm py-3 my-3">
             <div class="card mx-auto" style="width: 80%; background-color: lightgray">
-                <div class="card-body">
-                <div style="margin-left: 10px">
-                    <a href="{{ n.url }}" style="color: black"><h6>{{ n.title }}</h6></a>
-                    <a href="{{ n.img }}"> <img src="{{ n.img }}" width="200px" alt="img"></a>
-                    <br>
-                    <a href="{{ n.source }}" style="color: black; font-size: x-small">
-                        <h8>Source</h8>
-                    </a>
-                    <div style="height: 10px;"></div>
-                    <p style="font-size: small">{{ n.body }}</p>
-                    <p style="font-size: x-small">Published: {{ n.published }} Updated: {{ n.updated }}</p>
-                </div>
+                <div class="card-header">
+                    <div style="margin-left: 10px">
+                        <div class="card-header">
+                            <a href="{{ n.url }}" style="color: black"><h6>{{ n.title }}</h6></a>
+                        </div>
+                        <a href="{{ n.img }}"> <img src="{{ n.img }}" width="200px" alt="img"></a>
+                        <br>
+                        <a href="{{ n.source }}" style="color: black; font-size: x-small">
+                            <h8>Source</h8>
+                        </a>
+                        <div style="height: 10px;"></div>
+                        <p style="font-size: small">{{ n.body }}</p>
+                        <p style="font-size: x-small">Published: {{ n.published }} Updated: {{ n.updated }}</p>
+                    </div>
                 </div>
                 <div style="height: 20px;"></div>
             </div>

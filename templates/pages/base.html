@@ -1,5 +1,5 @@
 {% load static %}
-
+{% load wallpaper %}
 <!DOCTYPE html>
 <html>
     <head>
@@ -11,21 +11,26 @@
         <link rel="shortcut icon" href="{% static '/pages/favicon.ico' %}" type="img/ico "/>
         {% include 'navbar.html' %}
         {% block styles %}
-            <style>
-            body {
-            background-image: url({% static '/pages/cfiles26020.jpg' %});
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-size: cover;
-}
-            </style>
+            {% random_wallpaper as wallpaper %}
+            {% if wallpaper %}
+                <style>
+                    body {
+                        background-image: url({% get_media_prefix %}{{ wallpaper.image }});
+                        background-repeat: no-repeat;
+                        background-size: cover;
+                        background-color: lightgray;
+                        background-attachment: fixed;
+                    }
+                </style>
+            {% endif %}
+
             <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
                   integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
             <link rel="stylesheet" type="text/css" href="{% static '/pages/css/styles.css' %}">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
 
-        {% endblock %}
+        {% endblock styles %}
 
         {% block scripts %}
             <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
