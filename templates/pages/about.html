@@ -34,6 +34,7 @@
     </style>
 
 {% endblock %}
+
 {% block head %}
 {#    <head>#}
 {#        <meta charset="utf-8"/>#}
@@ -44,13 +45,18 @@
 {#    </head>#}
 {% endblock %}
 
+{% block title %}
+    <title>About 'Burque Bro</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+{% endblock title %}
 
 {% block body %}
 <div class="container">
     <div class="row">
         <!-- Blog Entries Column -->
         <div class="col mt-3 left">
-            <div class="card mb-4">
+            <div class="card mb-4" style="background-color: lightgray">
                 <div class="card-header" style="text-align: center">About Us</div>
                 <div class="card-body">
                     <p class="card-text text-muted h6">
@@ -73,9 +79,9 @@
 {% endblock %}
 
 
-{% block footer %}
-    <!-- Footer-->
-    <footer class="py-5 bg-secondary">
-        <div class="container"><p class="m-0 text-center text-white">Copyright &copy; 'burque bro 2022'</p></div>
-    </footer>
-{% endblock %}
+{#{% block footer %}#}
+{#    <!-- Footer-->#}
+{#    <footer class="py-5 bg-secondary">#}
+{#        <div class="container"><p class="m-0 text-center text-white">Copyright &copy; 'burque bro 2022'</p></div>#}
+{#    </footer>#}
+{#{% endblock %}#}

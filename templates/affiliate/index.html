@@ -1,4 +1,4 @@
-{% extends 'affiliate/base.html' %}
+{% extends 'pages/base.html' %}
 {% load static %}
 
 {% block styles %}
@@ -28,20 +28,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
         <meta name="description" content=""/>
         <meta name="author" content=""/>
-        <title>Shop Homepage no mames quey- Start Bootstrap Template</title>
+{#        <title>Shop Homepage</title>#}
     </head>
 {% endblock %}
+
+{% block title %}
+    <title>Things to do in 'burque</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+{% endblock title %}
+
+
 {% block body %}
     <body>
     <!-- Header-->
-    <header class="bg-secondary py-sm-1">
-        <div class="container px-4 px-sm-5 my-5">
-            <div class="text-center text-white">
-                <p class="display-5 fw-bolder">Shop in 'Burque Bro style</p>
-                <p class="lead fw-normal text-white-50 mb-0">Get your Albuquerque related items here.</p>
-            </div>
-        </div>
-    </header>
+{#    <header class="bg-secondary">#}
+{#        <div class="container px-4 px-sm-5 my-5">#}
+{#            <div class="text-center text-white">#}
+{#                <p class="display-5">Shop in 'Burque Bro style</p>#}
+{#                <p class="lead fw-normal text-white-50 mb-0">Get your Albuquerque related items here.</p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </header>#}
+        <div class="brand sticky-top" style="text-align: center; font-size: xx-large">
+        <h6 style="text-align: center">Shop in 'Burque style</h6>
+    </div>
+            <div class="card mx-auto" style="background-color: lightgray; width: 80%">
+{#            <div class="row">#}
     <script type="text/javascript">
         amzn_assoc_tracking_id = "burquebro-20";
         amzn_assoc_ad_mode = "manual";
@@ -102,11 +115,13 @@
         amzn_assoc_linkid = "8ab95610dd3423bb282eacfda883c4a8";
     </script>
     <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>
+            </div>
+{#            </div>#}
     </body>
 {% endblock %}
-{% block footer %}
-    <!-- Footer-->
-    <footer class="py-5 bg-secondary">
-        <div class="container"><p class="m-0 text-center text-white">Copyright &copy; 'burque bro 2022'</p></div>
-    </footer>
-{% endblock %}
+{#{% block footer %}#}
+{#    <!-- Footer-->#}
+{#    <footer class="bg-secondary">#}
+{#        <div class="container"><p class="m-0 text-center text-white">Copyright &copy; 'burque bro 2022'</p></div>#}
+{#    </footer>#}
+{#{% endblock %}#}
