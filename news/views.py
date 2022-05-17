@@ -1,9 +1,19 @@
+import re
+
 from django.shortcuts import render
 import requests
 from bs4 import BeautifulSoup
+import json
+
+
 
 
 def index(req):
+    with open('news.json') as json_file:
+        news = json.load(json_file)
+    return render(req, 'news/index.html', {'news': news})
+
+def news_update(req):
 
     ########################################
     # Scrape "Albuquerque Journal" news
@@ -33,7 +43,7 @@ def index(req):
             try:
                 title = title_tag[0].text
             except Exception:
-                title = body
+                continue
             img = div_tag[0].attrs
             img = img['data-bg']
             img = img[4:len(img) - 1]
@@ -54,6 +64,7 @@ def index(req):
         img = ""
         div_tag = tag.findAll('h2', attrs={'class': 'entry-title'})
         title = div_tag[0].text
+        title = title.strip()
         div_tag = tag.findAll('a', attrs={'class': 'post-thumbnail-inner'})
         url = div_tag[0].attrs['href']
         img = tag.findAll('amp-img')
@@ -61,6 +72,7 @@ def index(req):
         img = img[0: img.find('?')]
         date_tag = tag.findAll('time')
         body = tag.text
+        body = body.strip()
         if date_tag:
             date_published = date_tag[0].attrs
             date_published = date_published['datetime']
@@ -71,5 +83,7 @@ def index(req):
                      'updated': date_updated,
                      'url': url, 'img': img}
         news.append(news_dict)
-        news = sorted(news, key=lambda d: d['published'])[::-1]
+    news = sorted(news, key=lambda d: d['published'])[::-1]
+    with open("news.json", "w") as outfile:
+        json.dump(news, outfile, indent=4)
     return render(req, 'news/index.html', {'news': news})

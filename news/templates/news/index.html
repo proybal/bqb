@@ -1,53 +1,66 @@
 {% extends 'pages/base.html' %}
 {% load static %}
 
-{#{% block style %}#}
-{#    <style></style>#}
-{##}
-{#{% endblock %}#}
-
 {% block title %}
     <title>Albuquerque News</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 {% endblock title %}
 
+{% block style %}
+    <style>
+        {#body {#}
+        {#    margin: 20px;#}
+        {#    text-align: justify;#}
+        {
+        #}#}
+
+        {# a {#}
+        {#    text-align: justify;#}
+        {#    font-size: 25px;#}
+        {
+        #}#}
+        p {
+            text-align: justify
+        }
+    </style>
+{% endblock %}
 
 
 {% block body %}
-    <div class="sticky-top" style="text-align: center; color: blue; font-size: large">
-        <span><h6 style="font-size: large">Albuquerque News</h6></span>
-    </div>
-    <div style="height: 20px;"></div>
-    {% for n in news %}
-        <div class="container-sm py-3 my-3">
-            <div class="card mx-auto" style="margin-left: 10px; width: 80%; background-color: lightgray">
-                <div style="margin: 10px">
-                    <div class="card-header">
-                        <a href="{{ n.url }}" style="color: black"><h6>{{ n.title }}</h6></a>
+    <div class="container">
+        <div class="sticky-top" style="text-align: center; color: blue; font-size: large">
+            <span><h6 style="font-size: large">Albuquerque News</h6></span>
+        </div>
+        <div class="card-deck">
+            <div style="height: 20px;"></div>
+            {% for n in news %}
+                {% if forloop.first %}
+                    <div class="row">{% endif %}
+            <div class="col-md-6">
+                <div class="card border-primary">
+                    <div class="card-img h-100">
+                        <a href="{{ n.img }}"> <img class="mx-auto d-block" src="{{ n.img }}" width="80%" alt="img"></a>
+                        <br>
+                        <a href="{{ n.source }}" style="color: black; font-size: x-small">
+                            <h8>Source</h8>
+                        </a>
                     </div>
-                    <div class="card-body">
-                    <div style="height: 10px;"></div>
-                    <a href="{{ n.img }}"> <img src="{{ n.img }}" width="200px" alt="img"></a>
-                    <br>
-                    <a href="{{ n.source }}" style="color: black; font-size: x-small">
-                        <h8>Source</h8>
+                    <a href="{{ n.url }}"><p style="color: black; font-size: x-small;">{{ n.title }}</p></a>
                     </a>
-                    <div style="height: 10px;"></div>
+{#                    <div style="height: 10px;"></div>#}
                     <div class="card-text">
-                        <p style="font-size: small">{{ n.body }}</p>
+                        <p style="font-size: x-small; margin-left: 10px">{{ n.body }}</p>
                         <p style="font-size: x-small">Published: {{ n.published }} Updated: {{ n.updated }}</p>
                     </div>
-                        </div>
                 </div>
-                <div style="height: 20px;"></div>
             </div>
-            <div style="height: 20px;"></div>
+            {% if forloop.counter|divisibleby:4 %}</div>
+                <div class="row">{% endif %}
+            {% if forloop.last %}</div>{% endif %}
+            {% endfor %}
         </div>
-    {% endfor %}
-
     </div>
-
 {% endblock %}
 
 {% block script %}
@@ -61,5 +74,4 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
             integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
             crossorigin="anonymous"></script>
-    </body>
 {% endblock %}
