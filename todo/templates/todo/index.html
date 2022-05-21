@@ -15,41 +15,38 @@
 
 
 {% block body %}
-    <div style="height: 10px;"></div>
-    <div class="brand sticky-top" style="text-align: center; font-size: xx-large">
-        <h6 style="text-align: center; background-color: lightgray">Things to do in 'burque</h6>
-    </div>
-    <div style="height: 20px;"></div>
+        <div class="sticky-top" style="text-align: center; color: blue; font-size: large">
+            <span><h6 style="font-size: large">Albuquerque News</h6></span>
+        </div>
     {% for n in todo_news %}
         <div class="container">
-        <div class="card mx-auto" style="background-color: lightgray; width: 80%">
-            <div class="row">
-                <div class="col ms-5">
-                    <div style="height: 10px;"></div>
-                    <div style="margin-left: 10px">
-                        <a href="{{ n.url }}"><h5>{{ n.title }}</h5></a>
-                        <a href="{{ n.url }}"> <img src="{{ n.img }}" width="60%" alt="img"></a>
+            <div class="card mx-auto" style="background-color: lightgray; width: 80%">
+                <div class="row">
+                    <div class="col ms-5">
                         <div style="height: 10px;"></div>
+                        <div style="margin-left: 10px">
+                            <a href="{{ n.url }}"><h5>{{ n.title }}</h5></a>
+                            <a href="{{ n.url }}"> <img src="{{ n.img }}" width="60%" alt="img"></a>
+                            <div style="height: 10px;"></div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="font-weight-bold" style="height: 50px"></div>
+                        <h10>DATE/TIME</h10>
+                        {% for d in n.dates %}
+                            <div style="font-size: 12pt">
+                                {{ d.date }} {{ d.enddate }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="row-cols-1">
+                    <div class="col">
+                        {{ n.text }}
+                    </div>
                     </div>
                 </div>
-                <div class="col">
-                    <div style="height: 50px; font: bold"></div>
-                    <h10>DATE/TIME</h10>
-                    {% for d in n.dates %}
-                        <div style="font-size: 12pt">
-                            {{ d.date }} {{ d.enddate }}
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="row">
-                <div class="col">
-
-                    <h6>{{ n.text }}</h6>
-                </div>
-                </div>
+                <div style="height: 20px;"></div>
             </div>
-            <div style="height: 20px;"></div>
-        </div>
         </div>
         <div style="height: 20px;"></div>
     {% endfor %}
