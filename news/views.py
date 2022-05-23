@@ -4,6 +4,7 @@ from django.shortcuts import render
 import requests
 from bs4 import BeautifulSoup
 import json
+from .models import News
 
 
 
@@ -19,6 +20,7 @@ def news_update(req):
     # Scrape "Albuquerque Journal" news
     ########################################
     source = "https://www.abqjournal.com/category/abqnewsseeker"
+    news = News.objects.filter(source=source)
     news_r = requests.get(source)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
     news_tags = news_soup.find_all('article', class_='post-card')
