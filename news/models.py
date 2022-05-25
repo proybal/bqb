@@ -8,4 +8,9 @@ class News(models.Model):
     url = models.URLField()
 
     def __str__(self):
-        return self.source
+        return self.title
+
+    class Meta:
+        db_table = 'news'
+        # Add verbose name
+        verbose_name = 'New' # dumb i know but otherwise it displays 'Newss'
