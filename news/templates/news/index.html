@@ -24,9 +24,6 @@
         <div class="sticky-top" style="text-align: center; color: blue; font-size: large">
             <span><h6 style="font-size: large">Albuquerque News</h6></span>
         </div>
-        <img style="width: 245px; height: 247px;"
-             alt="Image description"
-             src="/static/news/images/abqjournal_TqT_icon.ico.jpg"/>
 
         <div class="card-deck">
             {#            <div style="height: 20px;"></div>#}
@@ -37,10 +34,11 @@
                 <div class="card mb-5 border-primary" style="background-color: lightsteelblue;">
                     <div class="card-body">
                         <div class="card-img">
+                            <p><a href="{{ n.source_url }}"> <img
+                                                                             src="{{ MEDIA_URL }}{{ n.thumbnail }}"
+                                                                             width="8%" alt="img"></a>{{ n.source }}</p>
                             <a href="{{ n.img }}"> <img class="mx-auto d-block" src="{{ n.img }}" width="80%" alt="img"></a>
-                            <a href="{{ n.source }}" style="color: black; font-size: x-small">
-                                <h8>Source</h8>
-                                <span class="icon"></span>
+                            <a href="{{ n.source_url }}" style="color: black; font-size: x-small">
                             </a>
                             <div class="card-title font-weight-bold text-black">
                                 <a href="{{ n.url }}"><p style="color: black">{{ n.title }}</p></a>
