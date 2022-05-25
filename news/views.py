@@ -20,7 +20,6 @@ def news_update(req):
     source_url = "https://www.abqjournal.com/category/abqnewsseeker"
     source = News.objects.filter(source=source_url).values()[0]['title']
     thumbnail = News.objects.filter(source=source_url).values()[0]['cover']
-    thumbnail
     news_r = requests.get(source_url)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
     news_tags = news_soup.find_all('article', class_='post-card')
