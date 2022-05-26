@@ -7,28 +7,28 @@ import json
 from .models import News
 
 
+
+
 def index(req):
     with open('news.json') as json_file:
         news = json.load(json_file)
     return render(req, 'news/index.html', {'news': news})
 
-
 def news_update(req):
+
     ########################################
     # Scrape "Albuquerque Journal" news
     ########################################
-    feed_url = "https://www.abqjournal.com/category/abqnewsseeker"
-    source = News.objects.filter(feed_url=feed_url).values()[0]['title']
-    source_url = News.objects.filter(feed_url=feed_url).values()[0]['source_url']
-    thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
-    news_r = requests.get(feed_url)
+    source = "https://www.abqjournal.com/category/abqnewsseeker"
+    news = News.objects.filter(source=source)
+    news_r = requests.get(source)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
     news_tags = news_soup.find_all('article', class_='post-card')
     news = []
     for tag in news_tags:
         div_tag = tag.findAll('div', attrs={'class': 'post-card__thumbnail__image'})
         img = ""
-        #        url = ""
+        url = ""
         date_updated = ""
         if div_tag:
             title_tag = tag.findAll('div', attrs={'class': 'post-card__excerpt', 'span': ''})
@@ -49,17 +49,15 @@ def news_update(req):
             img = div_tag[0].attrs
             img = img['data-bg']
             img = img[4:len(img) - 1]
-            news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body, 'published': date_published,
-                         'updated': date_updated, 'article_url': url, 'img': img, 'thumbnail': thumbnail}
+            news_dict = {'source': source, 'title': title, 'body': body, 'published': date_published,
+                         'updated': date_updated, 'url': url, 'img': img}
             news.append(news_dict)
 
     ########################################
     # Scrape "The Paper" news
     ########################################
-    feed_url = "https://abq.news/category/news/albuquerque/"
-    source = News.objects.filter(feed_url=feed_url).values()[0]['title']
-    thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
-    news_r = requests.get(feed_url)
+    source = "https://abq.news/category/news/albuquerque/"
+    news_r = requests.get(source)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
     news_tags = news_soup.find_all('article', class_='post')
     for tag in news_tags:
@@ -83,9 +81,9 @@ def news_update(req):
             if len(date_tag) > 1:
                 date_updated = date_tag[1].attrs
                 date_updated = date_updated['datetime']
-        news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
-                     'published': date_published,
-                     'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+        news_dict = {'source': source, 'title': title, 'body': body, 'published': date_published,
+                     'updated': date_updated,
+                     'url': url, 'img': img}
         news.append(news_dict)
     news = sorted(news, key=lambda d: d['published'])[::-1]
     with open("news.json", "w") as outfile:
