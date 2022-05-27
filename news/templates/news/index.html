@@ -8,14 +8,20 @@
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 {% endblock title %}
 {% block style %}
-    {#    <style>#}
-    {#        img {#}
-    {#            background-image: url("/static/pages/images/abqjournal.ico");#}
-    {#height: 20px;#}
-    {#width: 20px;#}
-    {#display: block;#}
-    {#        }#}
-    {#    </style>#}
+    <style>
+        img {
+            border: 1px solid lightblue;
+            border-radius: 8px;
+        }
+        .thumbnail {
+            border: 1px solid grey;
+            border-radius: 5px;
+        }
+        .card {
+            border: 1px solid black;
+            border-radius: 8px;
+        }
+    </style>
 {% endblock %}
 
 
@@ -24,9 +30,6 @@
         <div class="sticky-top" style="text-align: center; color: blue; font-size: large">
             <span><h6 style="font-size: large">Albuquerque News</h6></span>
         </div>
-        <img style="width: 245px; height: 247px;"
-             alt="Image description"
-             src="/static/news/images/abqjournal_TqT_icon.ico.jpg"/>
 
         <div class="card-deck">
             {#            <div style="height: 20px;"></div>#}
@@ -37,10 +40,11 @@
                 <div class="card mb-5 border-primary" style="background-color: lightsteelblue;">
                     <div class="card-body">
                         <div class="card-img">
-                            <a href="{{ n.img }}"> <img class="mx-auto d-block" src="{{ n.img }}" width="80%" alt="img"></a>
-                            <a href="{{ n.source }}" style="color: black; font-size: x-small">
-                                <h8>Source</h8>
-                                <span class="icon"></span>
+                            <p><a href="{{ n.source_url }}"> <img class="thumbnail"
+                                    src="{{ MEDIA_URL }}{{ n.thumbnail }}"
+                                    width="15%" alt="img"></a>{{ n.source }}</p>
+                            <a href="{{ n.img }}"> <img class="mx-auto d-block" src="{{ n.img }}" width="50%" alt="img"></a>
+                            <a href="{{ n.source_url }}" style="color: black; font-size: x-small">
                             </a>
                             <div class="card-title font-weight-bold text-black">
                                 <a href="{{ n.url }}"><p style="color: black">{{ n.title }}</p></a>
