@@ -39,17 +39,21 @@
             <div class="col-md-6">
                 <div class="card mb-5 border-primary" style="background-color: lightsteelblue;">
                     <div class="card-body">
-                        <div class="card-img">
-                            <p><a href="{{ n.source_url }}"> <img class="thumbnail"
+                        <div class="card-header">
+                            <p><a href="{{ n.source_url }}"> <img class="thumbnail mx-auto"
                                     src="{{ MEDIA_URL }}{{ n.thumbnail }}"
-                                    height="40px" alt="img"></a>{{ n.source }}</p>
+                                                                  height="40px" alt="img"></a></p>
+                            <p class="card-text">{{ n.source }}</p>
+
+                        </div>
+                        <div class="card-img">
                             <a href="{{ n.img }}"> <img class="mx-auto d-block" src="{{ n.img }}" width="50%" alt="img"></a>
                             <a href="{{ n.source_url }}" style="color: black; font-size: x-small">
                             </a>
-                            <div class="card-title font-weight-bold text-black">
+                            <div class="card-title mx-auto font-weight-bold text-black">
                                 <a href="{{ n.url }}"><p style="color: black">{{ n.title }}</p></a>
                             </div>
-                            <p style="font-size: small">{{ n.body }}</p>
+                            <p style="font-size: medium">{{ n.body }}</p>
                             <p style="font-size: x-small">Published: {{ n.published }} Updated: {{ n.updated }}</p>
                         </div>
                     </div>

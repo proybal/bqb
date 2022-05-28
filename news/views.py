@@ -41,12 +41,12 @@ def news_update(req):
             url = url_tag[0].contents[1].attrs['href']
             body = cleanup(tag.text)
             if date_tag:
-                published_date = date_tag[0].text
-                # published_date = published_date[published_date.find(':') + 1:len(published_date)]
-                date_published = date_tag[0].text
+                published = date_tag[0].attrs['datetime']
                 # date_published = date_published['datetime']
-                if len(date_tag) > 1:
-                    date_updated = date_tag[0].text
+                if len(date_tag) > 1: # look for date updated, if any
+                    updated = date_tag[1].attrs['datetime']
+                    # updated = updated[updated.find(':') + 1:len(updated)]
+                    # date_updated = parse(updated)
                     # date_updated = date_updated['datetime']
             try:
                 title = cleanup(title_tag[0].text)
@@ -57,8 +57,8 @@ def news_update(req):
             img = img['data-bg']
             img = img[4:len(img) - 1]
             news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
-                         'published': date_published,
-                         'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+                         'published': published,
+                         'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
             news.append(news_dict)
 
     ########################################
@@ -84,14 +84,12 @@ def news_update(req):
         date_tag = tag.findAll('time')
         body = cleanup(tag.text)
         if date_tag:
-            date_published = date_tag[0].attrs
-            date_published = date_published['datetime']
+            published = date_tag[0].attrs['datetime']
             if len(date_tag) > 1:
-                date_updated = date_tag[1].attrs
-                date_updated = date_updated['datetime']
+                updated = date_tag[1].attrs['datetime']
         news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
-                     'published': date_published,
-                     'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+                     'published': published,
+                     'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
         news.append(news_dict)
 
     ###############################################
@@ -125,10 +123,10 @@ def news_update(req):
         # body = tag.parent.text
         # body = body.strip()
         if date_tag:
-            date_published = date_tag
+            date_published = parse(date_tag)
             # date_published = date_published['datetime']
             # if len(date_tag) > 1:
-        date_updated = date_tag
+        date_updated = parse(date_tag)
         # date_updated = date_updated['datetime']
         news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
                      'published': date_published,
