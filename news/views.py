@@ -7,6 +7,7 @@ import json
 from .models import News
 from dateutil.parser import *
 
+
 def index(req):
     with open('news.json') as json_file:
         news = json.load(json_file)
@@ -14,6 +15,11 @@ def index(req):
 
 
 def news_update(req):
+    def cleanup(s):
+        s = re.sub('\n+', '', s)
+        s = s.strip()
+        return s
+
     ########################################
     # Scrape "Albuquerque Journal" news
     ########################################
@@ -27,31 +33,31 @@ def news_update(req):
     news = []
     for tag in news_tags:
         div_tag = tag.findAll('div', attrs={'class': 'post-card__thumbnail__image'})
-        img = ""
-        #        url = ""
         date_updated = ""
         if div_tag:
             title_tag = tag.findAll('div', attrs={'class': 'post-card__excerpt', 'span': ''})
             date_tag = tag.findAll('time', attrs={'class': 'entry-date'})
             url_tag = tag.findAll('div', attrs={'class': 'post-card__thumbnail', 'a': ''})
             url = url_tag[0].contents[1].attrs['href']
-            body = tag.text
+            body = cleanup(tag.text)
             if date_tag:
                 published_date = date_tag[0].text
-                published_date = published_date[published_date.find(':')+1:len(published_date)]
-                date_published = date_tag[0].attrs
+                # published_date = published_date[published_date.find(':') + 1:len(published_date)]
+                date_published = date_tag[0].text
                 # date_published = date_published['datetime']
                 if len(date_tag) > 1:
-                    date_updated = date_tag[1].attrs
-                    date_updated = date_updated['datetime']
+                    date_updated = date_tag[0].text
+                    # date_updated = date_updated['datetime']
             try:
-                title = title_tag[0].text
+                title = cleanup(title_tag[0].text)
+
             except Exception:
                 continue
             img = div_tag[0].attrs
             img = img['data-bg']
             img = img[4:len(img) - 1]
-            news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body, 'published': date_published,
+            news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
+                         'published': date_published,
                          'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
             news.append(news_dict)
 
@@ -69,16 +75,14 @@ def news_update(req):
         date_updated = ""
         img = ""
         div_tag = tag.findAll('h2', attrs={'class': 'entry-title'})
-        title = div_tag[0].text
-        title = title.strip()
+        title = cleanup(div_tag[0].text)
         div_tag = tag.findAll('a', attrs={'class': 'post-thumbnail-inner'})
         url = div_tag[0].attrs['href']
         img = tag.findAll('amp-img')
         img = img[0].attrs['src']
         img = img[0: img.find('?')]
         date_tag = tag.findAll('time')
-        body = tag.text
-        body = body.strip()
+        body = cleanup(tag.text)
         if date_tag:
             date_published = date_tag[0].attrs
             date_published = date_published['datetime']
@@ -90,46 +94,48 @@ def news_update(req):
                      'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
         news.append(news_dict)
 
-    # ###############################################
-    # # Scrape "New Mexico Politics with Joe Monahan
-    # ###############################################
-    # feed_url = "http://joemonahansnewmexico.blogspot.com"
-    # source = News.objects.filter(feed_url=feed_url).values()[0]['title']
-    # thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
-    # news_r = requests.get(feed_url)
-    # news_soup = BeautifulSoup(news_r.text, 'html5lib')
-    # news_tags = news_soup.find_all('tbody')
-    # blog_tags = news_soup.find_all('div', class_="blogPost")
-    # for tag in blog_tags:
-    #     date_published = ""
-    #     date_updated = ""
-    #     td_tag = tag.findAll('td')
-    #     h2_tag = tag.findAll('h2')
-    #     a_tag = tag.findAll('img')
-    #     div_tag = tag.findAll('table', attrs={'class': 'tr-caption-container'})
-    #     title = tag.text
-    #     div_tag = tag.findAll('a',)
-    #     # for d in a_tag:
-    #     #     url = d.attrs['href']
-    #     if td_tag:
-    #         img = td_tag[0].contents[0].attrs['href']
-    #     else:
-    #         img=""
-    #     date_tag = tag.parent.contents[1].text
-    #     # body = tag.parent.text
-    #     # body = body.strip()
-    #     if date_tag:
-    #         date_published = date_tag
-    #         # date_published = date_published['datetime']
-    #         # if len(date_tag) > 1:
-    #     date_updated = date_tag
-    #             # date_updated = date_updated['datetime']
-    #     news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
-    #                  'published': date_published,
-    #                  'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
-    #     news.append(news_dict)
-    news = sorted(news, key=lambda d: d['published'])[::-1]
-    # news = news.sort(key=lambda x: x[0]['date_published'], reverse=False)
+    ###############################################
+    # Scrape "New Mexico Politics with Joe Monahan
+    ###############################################
+    feed_url = "http://joemonahansnewmexico.blogspot.com"
+    source = News.objects.filter(feed_url=feed_url).values()[0]['title']
+    thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
+    news_r = requests.get(feed_url)
+    news_soup = BeautifulSoup(news_r.text, 'html5lib')
+    news_tags = news_soup.find_all('tbody')
+    blog_tags = news_soup.find_all('div', class_="blogPost")
+    for tag in blog_tags:
+        date_published = ""
+        date_updated = ""
+        td_tag = tag.findAll('td')
+        h2_tag = tag.findAll('h2')
+        a_tag = tag.findAll('img')
+        div_tag = tag.findAll('table', attrs={'class': 'tr-caption-container'})
+        title = 'New Mexico Politics with Joe Monahan'
+        body = cleanup(tag.text)
+        body = tag.parent.contents[3].contents[0]
+        div_tag = tag.findAll('a', )
+        # for d in a_tag:
+        #     url = d.attrs['href']
+        if td_tag:
+            img = td_tag[0].contents[0].attrs['href']
+        else:
+            img = ""
+        date_tag = tag.parent.contents[1].text
+        # body = tag.parent.text
+        # body = body.strip()
+        if date_tag:
+            date_published = date_tag
+            # date_published = date_published['datetime']
+            # if len(date_tag) > 1:
+        date_updated = date_tag
+        # date_updated = date_updated['datetime']
+        news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
+                     'published': date_published,
+                     'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+        news.append(news_dict)
+    # news = sorted(news, key=lambda d: d['published'])[::-1]
+    # news = news.sort(key=lambda x: x[0]['published'], reverse=False)
     # news = sorted(news.items(), key=lambda kv: (kv[1], kv[0]))
     # news = sorted(news, key=lambda d: d['date_published'])
     with open("news.json", "w") as outfile:

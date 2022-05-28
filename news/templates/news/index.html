@@ -10,7 +10,7 @@
 {% block style %}
     <style>
         img {
-            border: 1px solid lightblue;
+            border: 1px solid deepskyblueblue;
             border-radius: 8px;
         }
         .thumbnail {
@@ -42,15 +42,15 @@
                         <div class="card-img">
                             <p><a href="{{ n.source_url }}"> <img class="thumbnail"
                                     src="{{ MEDIA_URL }}{{ n.thumbnail }}"
-                                    width="15%" alt="img"></a>{{ n.source }}</p>
+                                    height="40px" alt="img"></a>{{ n.source }}</p>
                             <a href="{{ n.img }}"> <img class="mx-auto d-block" src="{{ n.img }}" width="50%" alt="img"></a>
                             <a href="{{ n.source_url }}" style="color: black; font-size: x-small">
                             </a>
                             <div class="card-title font-weight-bold text-black">
                                 <a href="{{ n.url }}"><p style="color: black">{{ n.title }}</p></a>
                             </div>
-                            <p style="font-size: x-small">{{ n.body }}</p>
-                            <p style="font-size: xx-small">Published: {{ n.published }} Updated: {{ n.updated }}</p>
+                            <p style="font-size: small">{{ n.body }}</p>
+                            <p style="font-size: x-small">Published: {{ n.published }} Updated: {{ n.updated }}</p>
                         </div>
                     </div>
                 </div>
