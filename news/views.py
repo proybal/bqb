@@ -33,7 +33,7 @@ def news_update(req):
     news = []
     for tag in news_tags:
         div_tag = tag.findAll('div', attrs={'class': 'post-card__thumbnail__image'})
-        date_updated = ""
+        updated = ""
         if div_tag:
             title_tag = tag.findAll('div', attrs={'class': 'post-card__excerpt', 'span': ''})
             date_tag = tag.findAll('time', attrs={'class': 'entry-date'})
@@ -42,7 +42,6 @@ def news_update(req):
             body = cleanup(tag.text)
             if date_tag:
                 published = date_tag[0].attrs['datetime']
-                # date_published = date_published['datetime']
                 if len(date_tag) > 1: # look for date updated, if any
                     updated = date_tag[1].attrs['datetime']
                     # updated = updated[updated.find(':') + 1:len(updated)]
@@ -100,42 +99,28 @@ def news_update(req):
     thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
     news_r = requests.get(feed_url)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
-    news_tags = news_soup.find_all('tbody')
     blog_tags = news_soup.find_all('div', class_="blogPost")
     for tag in blog_tags:
         date_published = ""
-        date_updated = ""
         td_tag = tag.findAll('td')
-        h2_tag = tag.findAll('h2')
-        a_tag = tag.findAll('img')
-        div_tag = tag.findAll('table', attrs={'class': 'tr-caption-container'})
         title = 'New Mexico Politics with Joe Monahan'
-        body = cleanup(tag.text)
-        body = tag.parent.contents[3].contents[0]
-        div_tag = tag.findAll('a', )
-        # for d in a_tag:
-        #     url = d.attrs['href']
+        body = cleanup(tag.contents[3].text)
         if td_tag:
             img = td_tag[0].contents[0].attrs['href']
         else:
             img = ""
-        date_tag = tag.parent.contents[1].text
-        # body = tag.parent.text
-        # body = body.strip()
-        if date_tag:
-            date_published = parse(date_tag)
-            # date_published = date_published['datetime']
-            # if len(date_tag) > 1:
-        date_updated = parse(date_tag)
-        # date_updated = date_updated['datetime']
+        published = parse(tag.parent.contents[1].text)
+        published = published.strftime("%Y-%m-%dT%H:%M:%S")
+        updated = parse(tag.parent.contents[1].text)
+        updated = updated.strftime("%Y-%m-%dT%H:%M:%S")
         news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
-                     'published': date_published,
-                     'updated': date_updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+                     'published': published,
+                     'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
         news.append(news_dict)
-    # news = sorted(news, key=lambda d: d['published'])[::-1]
+    news = sorted(news, key=lambda d: d['published'])[::-1]
     # news = news.sort(key=lambda x: x[0]['published'], reverse=False)
     # news = sorted(news.items(), key=lambda kv: (kv[1], kv[0]))
-    # news = sorted(news, key=lambda d: d['date_published'])
+    # news = sorted(news, key=lambda d: d['published'])
     with open("news.json", "w") as outfile:
         json.dump(news, outfile, indent=4)
     return render(req, 'news/index.html', {'news': news})
