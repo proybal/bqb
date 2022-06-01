@@ -15,6 +15,7 @@ def index(req):
 
 
 def news_update(req):
+
     def cleanup(s):
         s = re.sub('\n+', '', s)
         s = s.strip()
@@ -99,12 +100,18 @@ def news_update(req):
     thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
     news_r = requests.get(feed_url)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
+    body_tags = news_soup.find_all('tbody')
     blog_tags = news_soup.find_all('div', class_="blogPost")
+    tr_tag = news_soup.find_all('h2')
+    t = 0
     for tag in blog_tags:
         date_published = ""
         td_tag = tag.findAll('td')
-        title = 'New Mexico Politics with Joe Monahan'
-        body = cleanup(tag.contents[3].text)
+        title = tr_tag[t].text
+        title = cleanup(title[:title.find(':')])
+        body = tr_tag[t].text
+        body = body[body.find(':')+1:]
+        # body = cleanup(tr_tag[t].text)
         if td_tag:
             img = td_tag[0].contents[0].attrs['href']
         else:
@@ -116,11 +123,55 @@ def news_update(req):
         news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
                      'published': published,
                      'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+        if img != "":
+            news.append(news_dict)
+        t += 1
+
+
+    ###############################################
+    # Scrape "KOAT Action News 7"
+    ###############################################
+    feed_url = "https://www.koat.com/local-news"
+    source = News.objects.filter(feed_url=feed_url).values()[0]['title']
+    thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
+    news_r = requests.get(feed_url)
+    news_soup = BeautifulSoup(news_r.text, 'html5lib')
+    body_tags = news_soup.find_all('div', class_="article")
+    blog_tags = news_soup.find_all('div', class_="feed-item-byline")
+    a_tags = news_soup.find_all('li', class_="news")
+    tr_tag = news_soup.find_all('h2')
+    t = 0
+    for tag in body_tags:
+        url = tag.attrs['data-content-url']
+        news_r = requests.get(url)
+        news_soup = BeautifulSoup(news_r.text, 'html5lib')
+        date_published = ""
+        td_tag = tag.findAll('td')
+        title = tag.attrs['data-content-title']
+        # img = blog_tags[t].contents
+        # img = img[1].attrs['data-style']
+        # img = img[img.find('(')+1:img.find('?')]
+        # title = cleanup(title[:title.find(':')])
+        # body = tr_tag[t].text
+        # body = body[body.find(':')+1:]
+        # body = cleanup(tr_tag[t].text)
+        if td_tag:
+            img = td_tag[0].contents[0].attrs['href']
+        else:
+            img = ""
+        # published = parse(tag.parent.contents[1].text)
+        # published = published.strftime("%Y-%m-%dT%H:%M:%S")
+        # updated = parse(tag.parent.contents[1].text)
+        # updated = updated.strftime("%Y-%m-%dT%H:%M:%S")
+        news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
+                     'published': published,
+                     'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+        # if img != "":
         news.append(news_dict)
+        t += 1
+
+
     news = sorted(news, key=lambda d: d['published'])[::-1]
-    # news = news.sort(key=lambda x: x[0]['published'], reverse=False)
-    # news = sorted(news.items(), key=lambda kv: (kv[1], kv[0]))
-    # news = sorted(news, key=lambda d: d['published'])
     with open("news.json", "w") as outfile:
         json.dump(news, outfile, indent=4)
     return render(req, 'news/index.html', {'news': news})
