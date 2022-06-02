@@ -66,6 +66,7 @@ def news_update(req):
     ########################################
     feed_url = "https://abq.news/category/news/albuquerque/"
     source = News.objects.filter(feed_url=feed_url).values()[0]['title']
+    source_url = News.objects.filter(feed_url=feed_url).values()[0]['source']
     thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
     news_r = requests.get(feed_url)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
@@ -97,6 +98,7 @@ def news_update(req):
     ###############################################
     feed_url = "https://joemonahansnewmexico.blogspot.com/"
     source = News.objects.filter(feed_url=feed_url).values()[0]['title']
+    source_url = News.objects.filter(feed_url=feed_url).values()[0]['source']
     thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
     news_r = requests.get(feed_url)
     news_soup = BeautifulSoup(news_r.text, 'html5lib')
