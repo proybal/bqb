@@ -6,18 +6,6 @@ from bs4 import BeautifulSoup
 import json
 from .models import News
 from dateutil.parser import *
-from django_cron import CronJobBase, Schedule
-
-
-class MyCronJob(CronJobBase):
-    RUN_EVERY_MINS = 15 # every 15 minutes
-
-    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'my_app.my_cron_job'    # a unique code
-
-    def do(self):
-        pass    # do your thing here
-
 
 
 def index(req):
@@ -27,13 +15,6 @@ def index(req):
 
 
 def news_update(req):
-    def get_source(feed):
-        feed_url = feed
-        source = News.objects.filter(feed_url=feed_url).values()[0]['title']
-        source_url = News.objects.filter(feed_url=feed_url).values()[0]['source']
-        thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
-        return source, source_url, thumbnail
-
     def cleanup(s):
         s = re.sub('\n+', '', s)
         s = s.strip()
@@ -44,7 +25,6 @@ def news_update(req):
         # Scrape "Albuquerque Journal" news
         ########################################
         feed_url = "https://www.abqjournal.com/category/abqnewsseeker"
-        source, source_url, thumbnail = get_source(feed_url)
         news_r = requests.get(feed_url)
         news_soup = BeautifulSoup(news_r.text, 'html5lib')
         news_tags = news_soup.find_all('article', class_='post-card')
@@ -59,8 +39,11 @@ def news_update(req):
                 body = cleanup(tag.text)
                 if date_tag:
                     published = date_tag[0].attrs['datetime']
-                    if len(date_tag) > 1: # look for date updated, if any
+                    if len(date_tag) > 1:  # look for date updated, if any
                         updated = date_tag[1].attrs['datetime']
+                        # updated = updated[updated.find(':') + 1:len(updated)]
+                        # date_updated = parse(updated)
+                        # date_updated = date_updated['datetime']
                 try:
                     title = cleanup(title_tag[0].text)
 
@@ -73,13 +56,13 @@ def news_update(req):
                              'published': published,
                              'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
                 news.append(news_dict)
+        return
 
     def thepaper():
         ########################################
         # Scrape "The Paper" news
         ########################################
         feed_url = "https://abq.news/category/news/albuquerque/"
-        source, source_url, thumbnail = get_source(feed_url)
         news_r = requests.get(feed_url)
         news_soup = BeautifulSoup(news_r.text, 'html5lib')
         news_tags = news_soup.find_all('article', class_='post')
@@ -104,15 +87,14 @@ def news_update(req):
                          'published': published,
                          'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
             news.append(news_dict)
-
+        return
 
     def joemonahan():
         ###############################################
         # Scrape "New Mexico Politics with Joe Monahan
         ###############################################
-        feed_url = "https://joemonahansnewmexico.blogspot.com"
-        url = "https://joemonahansnewmexico.blogspot.com"
-        source, source_url, thumbnail = get_source(feed_url)
+        feed_url = "https://joemonahansnewmexico.blogspot.com/"
+        url = "https://joemonahansnewmexico.blogspot.com/"
         news_r = requests.get(feed_url)
         news_soup = BeautifulSoup(news_r.text, 'html5lib')
         body_tags = news_soup.find_all('tbody')
@@ -125,7 +107,7 @@ def news_update(req):
             title = tr_tag[t].text
             title = cleanup(title[:title.find(':')])
             body = tr_tag[t].text
-            body = body[body.find(':')+1:]
+            body = body[body.find(':') + 1:]
             # body = cleanup(tr_tag[t].text)
             if td_tag:
                 img = td_tag[0].contents[0].attrs['href']
@@ -141,66 +123,61 @@ def news_update(req):
             if img != "":
                 news.append(news_dict)
             t += 1
+        return
 
-    # def koat():
-
-        # ###############################################
-        # # Scrape "KOAT Action News 7"
-        # ###############################################
-        # feed_url = "https://www.koat.com/local-news"
-        # source = News.objects.filter(feed_url=feed_url).values()[0]['title']
-        # thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
-        # news_r = requests.get(feed_url)
-        # news_soup = BeautifulSoup(news_r.text, 'html5lib')
-        # body_tags = news_soup.find_all('div', class_="article")
-        # blog_tags = news_soup.find_all('div', class_="feed-item-byline")
-        # a_tags = news_soup.find_all('li', class_="news")
-        # tr_tag = news_soup.find_all('h2')
-        # t = 0
-        # for tag in body_tags:
-        #     url = tag.attrs['data-content-url']
-        #     news_r = requests.get(url)
-        #     news_soup = BeautifulSoup(news_r.text, 'html5lib')
-        #     date_published = ""
-        #     td_tag = tag.findAll('td')
-        #     title = tag.attrs['data-content-title']
-        #     # img = blog_tags[t].contents
-        #     # img = img[1].attrs['data-style']
-        #     # img = img[img.find('(')+1:img.find('?')]
-        #     # title = cleanup(title[:title.find(':')])
-        #     # body = tr_tag[t].text
-        #     # body = body[body.find(':')+1:]
-        #     # body = cleanup(tr_tag[t].text)
-        #     if td_tag:
-        #         img = td_tag[0].contents[0].attrs['href']
-        #     else:
-        #         img = ""
-        #     # published = parse(tag.parent.contents[1].text)
-        #     # published = published.strftime("%Y-%m-%dT%H:%M:%S")
-        #     # updated = parse(tag.parent.contents[1].text)
-        #     # updated = updated.strftime("%Y-%m-%dT%H:%M:%S")
-        #     news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
-        #                  'published': published,
-        #                  'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
-        #     # if img != "":
-        #     news.append(news_dict)
-        #     t += 1
-        #
-
-
+    # def koat(req):
+    # ###############################################
+    # # Scrape "KOAT Action News 7"
+    # ###############################################
+    # feed_url = "https://www.koat.com/local-news"
+    # source = News.objects.filter(feed_url=feed_url).values()[0]['title']
+    # thumbnail = News.objects.filter(feed_url=feed_url).values()[0]['cover']
+    # news_r = requests.get(feed_url)
+    # news_soup = BeautifulSoup(news_r.text, 'html5lib')
+    # body_tags = news_soup.find_all('div', class_="article")
+    # blog_tags = news_soup.find_all('div', class_="feed-item-byline")
+    # a_tags = news_soup.find_all('li', class_="news")
+    # tr_tag = news_soup.find_all('h2')
+    # t = 0
+    # for tag in body_tags:
+    #     url = tag.attrs['data-content-url']
+    #     news_r = requests.get(url)
+    #     news_soup = BeautifulSoup(news_r.text, 'html5lib')
+    #     date_published = ""
+    #     td_tag = tag.findAll('td')
+    #     title = tag.attrs['data-content-title']
+    #     # img = blog_tags[t].contents
+    #     # img = img[1].attrs['data-style']
+    #     # img = img[img.find('(')+1:img.find('?')]
+    #     # title = cleanup(title[:title.find(':')])
+    #     # body = tr_tag[t].text
+    #     # body = body[body.find(':')+1:]
+    #     # body = cleanup(tr_tag[t].text)
+    #     if td_tag:
+    #         img = td_tag[0].contents[0].attrs['href']
+    #     else:
+    #         img = ""
+    #     # published = parse(tag.parent.contents[1].text)
+    #     # published = published.strftime("%Y-%m-%dT%H:%M:%S")
+    #     # updated = parse(tag.parent.contents[1].text)
+    #     # updated = updated.strftime("%Y-%m-%dT%H:%M:%S")
+    #     news_dict = {'source': source, 'source_url': source_url, 'title': title, 'body': body,
+    #                  'published': published,
+    #                  'updated': updated, 'url': url, 'img': img, 'thumbnail': thumbnail}
+    #     # if img != "":
+    #     news.append(news_dict)
+    #     t += 1
+    #
     news = []
     news_list = News.objects.filter(published=True)
-    for news_source in news_list:
-        source = news_source.title
-        source_url = news_source.source
-        thumbnail = news_source.cover
-        function = news_source.function
-        eval(function +"()")
-    # abqjournal()
-    # thepaper()
-    # joemonahan()
+    for n in news_list:
+        source = n.title
+        source_url = n.source
+        thumbnail = n.cover
+        eval(n.function + "()")
 
     news = sorted(news, key=lambda d: d['published'])[::-1]
     with open("news.json", "w") as outfile:
         json.dump(news, outfile, indent=4)
+
     return render(req, 'news/index.html', {'news': news})

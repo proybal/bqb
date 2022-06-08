@@ -10,7 +10,7 @@
 {% block style %}
     <style>
         img {
-            border: 1px solid deepskyblueblue;
+            border: 1px;
             border-radius: 8px;
         }
         .thumbnail {
@@ -36,8 +36,8 @@
             {% for n in news %}
                 {% if forloop.first %}
                     <div class="row justify-content-center">{% endif %}
-            <div class="col-md-6">
-                <div class="card mb-5 border-primary" style="background-color: lightsteelblue;">
+            <div class="col-md-4">
+                <div class="card h-100 border-primary" style="background-color: lightsteelblue;">
                     <div class="card-body">
                         <div class="card-header">
                             <p class="text-secondary"><a href="{{ n.source_url }}"> <img class="thumbnail mx-auto"
@@ -58,7 +58,7 @@
                     </div>
                 </div>
             </div>
-            {% if forloop.counter|divisibleby:4 %}</div>
+            {% if forloop.counter|divisibleby:3 %}</div>
                 <div class="row justify-content-center">{% endif %}
             {% if forloop.last %}</div>{% endif %}
             {% endfor %}
