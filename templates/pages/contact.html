@@ -1,0 +1,69 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+
+{% block styles %}
+{#    <link rel="shortcut icon" href="{% static 'pages/cholo.ico' %}"/>#}
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+          integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+{#    <link rel="stylesheet" type="text/css" href="{% static 'pages/css/styles.css' %}">#}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
+    <style>
+        H4 {
+      font-size: 18pt;
+      font-style: italic;
+      text-shadow: 3px 3px 3px #ababab;
+        margin-left: 20%;
+    }
+    {#    p {#}
+    {#  font-size: 12pt;#}
+    {#  font-style: italic;#}
+    {#  text-shadow: 3px 3px 3px #ababab;#}
+    {#  margin-left: 20%;#}
+    {#}#}
+
+.button {
+  border-radius: 4px;
+  background-color: lightgray;
+  color: black;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+{#body {#}
+{#            background-image: url({% static 'pages/cfiles26020.jpg' %});#}
+{#            background-repeat: no-repeat;#}
+{#            background-attachment: fixed;#}
+{#            background-size: cover;#}
+{#}#}
+
+    </style>
+{% endblock styles %}
+
+{% block body %}
+<!--Contact form-->
+
+<div class="container">
+            <div class="card mb-4" style="background-color: lightgray; margin-top: 5%">
+                <div class="card-header" style="text-align: center">Contact Us</div>
+                <div class="card-body">
+		            <h6 class="card-title">Contact us directly if you have any questions, comments or suggestions.</h6>
+                    <p class="card-text text-muted h6">
+                        Please type your name, email address and a message below if you have any questions.
+                        One of our staff members will contact you directly and answer your questions as soon as possible.
+                    </p>
+                    <br>
+                    <form method="post">
+                    {% csrf_token %}
+                        {{form.as_p}}
+                        <button class="button btn" type="submit">Submit</button>
+                    </form>
+        </div>
+{#        {% block sidebar %} {% include 'blog/sidebar.html' %} {% endblock sidebar %}#}
+    </div>
+</div>
+{% endblock %}

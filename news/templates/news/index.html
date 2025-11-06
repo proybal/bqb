@@ -1,0 +1,261 @@
+{% extends 'news/base.html' %}
+{% load tz %}
+{% load static %}
+{% load custom_tags %}
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+{% block style %}
+    <style>
+        .news-body {
+            white-space: pre-line; /* Preserve line breaks */
+            font-size: medium;
+            margin-bottom: 10px;
+        }
+
+        .bg-body {
+            background: lightgrey !important;
+        }
+
+        .news-title {
+            font-size: large;
+            padding: 5px;
+            margin-top: 10px;
+        }
+
+        .news-published {
+            margin-top: 10px;
+
+            border-top: dimgrey medium solid;
+            border-width: thin;
+        }
+
+        .news-item {
+            margin-top: 10px;
+            border: black medium solid;
+            border-radius: 5px;
+            border-width: 1px;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+        }
+
+
+        @media (max-width: 600px) {
+            .cards {
+                grid-template-columns: repeat(1, 1fr);
+                display: none;
+            }
+
+            .card {
+                display: none;
+            }
+        }
+
+        @media (min-width: 576px) {
+            .modal-dialog {
+                max-width: 400px;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+        }
+
+        /* Screen larger than 600px? 2 column */
+        @media (min-width: 600px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Style for the "Go to Top" button */
+        .go-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 50px;
+            font-size: 20px;
+            display: none; /* Hide the button by default */
+            cursor: pointer;
+            caret-color: transparent;
+        }
+
+        img {
+            max-height: 400px;
+            max-width: 350px;
+        }
+    </style>
+{% endblock style %}
+
+{% block script %}
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsMediaOrganization",
+  "name": "New Mexico News",
+  "url": "https://burquebro.com",
+  "description": "Stay updated with the latest news from New Mexico. Burque Bro brings you top headlines, breaking stories, and in-depth coverage from across the state.",
+  "foundingDate": "2024-01-01",
+  "location": {
+    "@type": "Place",
+    "name": "New Mexico, USA",
+    "address": {
+      "@type": "PostalAddress",
+      "addressRegion": "NM",
+      "addressCountry": "USA"
+    }
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "Customer Support",
+    "email": "proybal@yahoo.com",
+    "telephone": "+1-505-401-9111"
+  }
+}
+</script>
+
+    <script>
+        $(document).ready(function () {
+            var isScrolling = false; // Flag to track if scrolling animation is in progress
+
+            // Show/hide the "Go to Top" button based on the scroll position
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 20) {
+                    $('#goToTopButton').fadeIn();
+                } else {
+                    $('#goToTopButton').fadeOut();
+                }
+            });
+
+            // Scroll to the top of the page when the button is clicked
+            $('#goToTopButton').click(function () {
+                if (!isScrolling) {
+                    isScrolling = true; // Set the flag to indicate scrolling animation is in progress
+                    $('html, body').animate({scrollTop: 0}, 500, function () {
+                        isScrolling = false; // Reset the flag once scrolling animation is completed
+                        $(':input').blur(); // Remove focus from input elements
+                    });
+                }
+            });
+        });
+
+        // Function to truncate text to a specific number of words
+        function truncateText(element, maxWords) {
+            var words = element.textContent.split(/\s+/); // Split text content into words
+            if (words.length > maxWords) {
+                var truncatedText = words.slice(0, maxWords).join(" ") + "..."; // Join the first maxWords words with a space
+                element.textContent = truncatedText;
+            }
+        }
+
+        // Truncate text for all elements with class "news-body"
+        window.addEventListener("load", function () {
+            var elements = document.getElementsByClassName("news-body");
+            for (var i = 0; i < elements.length; i++) {
+                truncateText(elements[i], 30); // Limit to 100 words
+            }
+        });
+    </script>
+
+{% endblock script %}
+
+{% block head %}
+    <title>Best Source for New Mexico News | {{ category }} News</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <meta name="description" content="Stay updated with the latest news from New Mexico. Our news aggregator brings you top headlines, breaking stories, and in-depth coverage from across the state.">
+
+
+{% endblock head %}
+
+{% block title %}
+    {% include 'news/navbar.html' %}
+{% endblock title %}
+
+{% block body %}
+        {% if messages %}
+        <div class="alert alert-primary d-flex align-items-center p-1" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                 class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img"
+                 aria-label="Warning:">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            <div>
+                {% for message in messages %}
+                    <p class="h4" {% if message.tags %}
+                       class="{{ message.tags }}"{% endif %}> {{ message }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <div class="container-fluid">
+        <div><h5 style="color: lightgray">{{ news|length }} Articles in {{ category }} News</h5></div>
+        <div class="row">
+            {% for n in news %}
+                <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient">
+                    <div class="news-item bg-body h-100 mx-auto p-3 rounded">
+                        <div class="news-title clearfix content-heading">
+                            <span>
+                                <a href="{{ n.source_url }}">
+                                    <img style="margin-right: 5px; border-style: inset"
+                                         href="{{ n.source_url }}"
+                                         class="pull-left thumbnail rounded"
+                                         src="{{ MEDIA_URL }}{{ n.thumbnail }}"
+                                         width="70vw" loading="lazy"
+                                         alt="{{ source.source }}">
+                                    <h5 class="m-1">{{ n.source }}</h5>
+                                </a>
+                            </span>
+                            {% if n.author %}
+                                <p class="p-0 m-0" style="font-size: x-small">by: {{ n.author }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="news-published mb-4 mt-1"></div>
+                        {% if n.img %}
+                            <a href="{{ n.url }}" style="font-style: italic; font-size: large">
+                                <img class="mx-auto d-block rounded"
+                                     src="{{ n.img }}"
+                                     width='75%' loading="lazy"
+                                     alt="{{ source.title }}">
+                                <div class="news-title">{{ n.title }}</div>
+                            </a>
+                        {% else %}
+                            <a href="{{ n.url }}">
+                                <p class="news-title">{{ n.title }}</p>
+                            </a>
+                        {% endif %}
+                        <!-- Add a truncatable area for the body text -->
+                        <div class="news-body">
+                            <p>{{ n.body }}</p>
+                        </div>
+
+                        <div class="news-published">
+                            <p class="m-1" style="font-size: x-small;">Published: {{ n.published }}</p>
+                            {% if n.updated and n.updated != n.published %}
+                                <p style="font-size: x-small">Updated: {{ n.updated }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="go-to-top" id="goToTopButton">&uarr;</div>
+    <h5 style="color: lightgray; font-size: small" href="mailto: proybal@yahoo.com">created by Paul Roybal</h5>
+
+{#        <!-- Bootstrap Bundle with Popper -->#}
+{#    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>#}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+{% endblock %}

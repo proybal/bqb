@@ -1,0 +1,182 @@
+{% extends 'news/base.html' %}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+
+{% block style %}
+{#    <link rel="shortcut icon" href="{% static 'pages/cholo.ico' %}"/>#}
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+          integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+{#    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">#}
+{#    <link rel="stylesheet" type="text/css" href="{% static '/pages/css/styles.css' %}">#}
+{#    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">#}
+{
+
+
+       <style>
+{#    H1 {#}
+{#      font-family: "Sofia", sans-serif;#}
+{#      font-size: 50pt;#}
+{#      font-style: italic;#}
+{#      text-shadow: 3px 3px 3px #ababab;#}
+{#        margin-left: 20%;#}
+{#    }#}
+{##}
+{#        html {#}
+{#            margin: 10px;#}
+{#            padding: 10px;#}
+{#            height: 100%;#}
+        {#background: gray !important;#}
+{#        }#}
+{##}
+        .card {
+            width: 600px;
+            margin-top: auto;
+            margin-bottom: auto;
+            background: gray;
+            color: black;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            padding: 10px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -webkit-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            border-radius: 5px;
+
+        }
+
+        .form_container {
+            margin-top: 10px;
+        }
+
+        #form-title {
+            color: #fff;
+        }
+
+        .login_btn {
+            text-align: center;
+        }
+
+        .login_btn:focus {
+            box-shadow: none !important;
+            outline: 0px !important;
+        }
+
+        .login_container {
+            padding: 0 2rem;
+        }
+        .form_control {
+            border-width: 1px;
+        }
+        .input-group-text {
+            background: transparent !important;
+            color: dimgrey !important;
+            border-style: none;
+            border-radius: 0.25rem 0 0 0.25rem !important;
+        }
+        h4 {
+         color: black
+        }
+
+
+        </style>
+
+{% endblock style %}
+
+{% block title %}
+<title>Sign Up</title>
+{% include 'news/navbar.html' %}
+{% endblock title %}
+
+
+{% block body %}
+    <div class="card mb-4" style="margin-top: 5%; margin-left: 30%; margin-right: 30%; background-color: lightgray; border-radius: 15px;">
+        <article class="card-body mx-auto" style="max-width: 400px;">
+            <h3 class="card-title mt-3 text-center" style="background-color: transparent;">Register</h3>
+{#            <p>#}
+{#            <a href="" class="btn btn-block btn-twitter"> <i class="fab fa-twitter"></i>   Login via Twitter</a>#}
+{#            <a href="" class="btn btn-block btn-facebook"> <i class="fab fa-facebook-f"></i>   Login via facebook</a>#}
+{#            </p>#}
+{#            <p class="divider-text">#}
+{#                <span>OR</span>#}
+{#            </p>#}
+
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="alert alert-info ">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="fa fa-user"></i> </span>
+                    </div>
+{#                            <input id="id_first_name" name="name" class="form-control" type="text" placeholder="First name">#}
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        {% for error in form.username.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    {% endif %}
+            </div> <!-- form-group// -->
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="fa fa-user"></i> </span>
+                    </div>
+{#                            <input id="id_first_name" name="name" class="form-control" type="text" placeholder="First name">#}
+                    {{ form.name }}
+                </div> <!-- form-group// -->
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="fa fa-envelope"></i> </span>
+                    </div>
+{#                            <input id="id_last_name" name="last_name" class="form-control" placeholder="Last Name" type="text">#}
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    {% endif %}
+                </div> <!-- form-group// -->
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="fa fa-phone"></i> </span>
+                    </div>
+{#                        	<input id="id_phone" name="phone" class="form-control" placeholder="Phone number" type="text">#}
+                    {{ form.phone }}
+                </div> <!-- form-group// -->
+                <div class="form-group input-group">
+                </div> <!-- form-group end.// -->
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="fa fa-lock"></i> </span>
+                    </div>
+{#                            <input id="id_password1" name="password1" class="form-control" placeholder="Create password" type="password1">#}
+                    {{ form.password1 }}
+                </div> <!-- form-group// -->
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="fa fa-lock"></i> </span>
+                    </div>
+{#                            <input id="password2" name="password2" class="form-control" placeholder="Repeat password" type="password">#}
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        {% for error in form.password2.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    {% endif %}
+                </div> <!-- form-group// -->
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block"> Create Account  </button>
+                </div> <!-- form-group// -->
+                <p class="text-center">Have an account? <a href="{% url "login" %}">Log In</a> </p>
+            </form>
+        {{ form.errors }}
+        </article>
+    </div> <!-- card.// -->
+{% endblock body %}

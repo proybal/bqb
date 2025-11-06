@@ -1,0 +1,75 @@
+{% extends 'KANW/base.html' %}
+
+{% block title %}
+    <title>KANW New Mexico Weather</title>
+{% endblock title %}
+
+{% block style %}
+    <style>
+    .row {
+        border: 1px solid;
+    }
+    .col {
+        text-align: center;
+    }
+    </style>
+
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="mx-0">
+        <h2>KANW New Mexico Weather</h2> <h3>{{ date }}</h3>
+        <h4>{{ forecast.1.day }}</h4>
+        <p>{{ forecast.1.description }}</p>
+        <p>{{ forecast.1.forecast }}</p>
+        <p>Heights {{ forecast.1.hilow }} {{ forecast.1.Heights }}</p>
+        <p>Valley {{ forecast.1.hilow }} {{ forecast.1.Valley }}</p>
+        <h4>{{ forecast.2.day }}</h4>
+        <p>{{ forecast.2.description }}</p>
+        <p>{{ forecast.2.forecast }}</p>
+        <p>Heights {{ forecast.2.hilow }} {{ forecast.2.Heights }}</p>
+        <p>Valley {{ forecast.2.hilow }} {{ forecast.2.Valley }}</p>
+        <h4>{{ forecast.3.day }}</h4>
+        <p>{{ forecast.3.description }}</p>
+        <p>{{ forecast.3.forecast }}</p>
+        <p>Heights {{ forecast.3.hilow }} {{ forecast.3.Heights }}</p>
+        <p>Valley {{ forecast.3.hilow }} {{ forecast.3.Valley }}</p>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col">
+            {% for f in column_a %}
+                <p>{{ f.city }}</p>
+            {% endfor %}
+        </div>
+        <div class="col">
+            {% for f in column_a %}
+                <p>{{ f.temp }}</p>
+            {% endfor %}
+        </div>
+        <div class="col">
+            {% for f in column_b %}
+                <p>{{ f.city }}</p>
+            {% endfor %}
+        </div>
+        <div class="col">
+            {% for f in column_b %}
+                <p>{{ f.temp }}</p>
+            {% endfor %}
+        </div>
+    </div>
+    <br>
+    <hr>
+    <div class="row">
+        <p>Current Temperatures</p>
+        {% for c in current_temps %}
+            <div class="col">
+                <h5>{{ c.city }}</h5>
+                <h5>{{ c.temp }}</h5>
+            </div>
+        {% endfor %}
+    </div>
+    <div>Currently in Albuquerque the Temperature is: {{ albuquerque_temp }}</div>
+</div>
+{% endblock body %}

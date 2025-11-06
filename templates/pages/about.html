@@ -1,0 +1,87 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+
+{% block styles %}
+    <!-- Bootstrap core JS-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Core theme JS-->
+{#    <script src="{% static 'affiliate/js/scripts.js' %}"></script>#}
+{#    <link rel="stylesheet" type="text/css" href="{% static 'affiliate/css/styles.css' %}">#}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <style>
+        H1 {
+            font-family: "Sofia", sans-serif;
+            font-size: 50pt;
+            font-style: italic;
+            text-shadow: 3px 3px 3px #ababab;
+            margin-left: 20%;
+        }
+        p {
+            font-family: "Sofia", sans-serif;
+            font-size: 14pt;
+            margin-left: 10%;
+        }
+        body {
+            background-image: url({% static 'pages/cfiles26020.jpg' %});
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+}
+
+    </style>
+
+{% endblock %}
+
+{% block head %}
+{#    <head>#}
+{#        <meta charset="utf-8"/>#}
+{#        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>#}
+{#        <meta name="description" content=""/>#}
+{#        <meta name="author" content=""/>#}
+{#        <title>Shop Homepage no mames quey- Start Bootstrap Template</title>#}
+{#    </head>#}
+{% endblock %}
+
+{% block title %}
+    <title>About 'Burque Bro</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+{% endblock title %}
+
+{% block body %}
+<div class="container">
+    <div class="row">
+        <!-- Blog Entries Column -->
+        <div class="col mt-3 left">
+            <div class="card mb-4" style="background-color: lightgray">
+                <div class="card-header" style="text-align: center">About Us</div>
+                <div class="card-body">
+                    <p class="card-text text-muted h6">
+                    Welcome to burquebro.com a site dedicated to the city of Albuquerque, New Mexico, USA.
+                    </p>
+                    <p class="card-text text-muted h6">
+
+                    </p>
+                    <p class="card-text text-muted h6">
+                    I hope you enjoy the site and if so drop me a comment.
+
+                    Thanks, Paul Roybal
+                    </p>
+                </div>
+            </div>
+        </div>
+{#        {% block sidebar %} {% include 'blog/sidebar.html' %} {% endblock sidebar %}#}
+    </div>
+</div>
+{% endblock %}
+
+
+{#{% block footer %}#}
+{#    <!-- Footer-->#}
+{#    <footer class="py-5 bg-secondary">#}
+{#        <div class="container"><p class="m-0 text-center text-white">Copyright &copy; 'burque bro 2022'</p></div>#}
+{#    </footer>#}
+{#{% endblock %}#}

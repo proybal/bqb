@@ -1,0 +1,63 @@
+{% load static %}
+{% load wallpaper %}
+<!DOCTYPE html>
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {#<meta name="keywords" content="htmlcss bootstrap, multi level menu, submenu, treeview nav menu examples" />#}
+    <meta name="description" content="New Mexico News Aggregator"/>
+    {#    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"#}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+          crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="shortcut icon" type="image/ico" href="{% static 'news/cholo_white.png' %}"/>
+</head>
+
+{% random_wallpaper as wallpaper %}
+{% if wallpaper %}
+    <style>
+        body {
+            background-image: url({% get_media_prefix %}{{ wallpaper.image }});
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+    </style>
+{% endif %}
+
+{% block head %}
+
+
+{% endblock %}
+
+
+{% block title %}
+
+{% endblock %}
+
+
+{% block script %}
+
+
+{% endblock script %}
+
+{% block style %}
+
+{% endblock %}
+
+{% block body %}
+
+{% endblock body %}
+
+{% block footer %}
+
+{% endblock footer %}
+
+</html>

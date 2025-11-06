@@ -1,0 +1,280 @@
+{% load static %}
+{% load custom_tags %}
+<style>
+    .modal-header, h4, .close {
+        background-color: lightsteelblue;
+        color: black !important;
+        text-align: center;
+        font-size: 24px;
+    }
+
+    .modal-p {
+    {#color: steelblue;#}
+    }
+
+    .modal-footer {
+        background-color: #f9f9f9;
+    }
+
+    .modal-body {
+        background-color: lightgrey;
+        color: black;
+    }
+
+    .bg-blue {
+        background-color: lightgray;
+    }
+
+    /* ============ desktop view ============ */
+    @media all and (min-width: 992px) {
+
+        .dropdown-menu li {
+            position: relative;
+        }
+
+        .dropdown-menu .submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: -7px;
+        }
+
+        .dropdown-menu .submenu-left {
+            right: 100%;
+            left: auto;
+        }
+
+        .dropdown-menu > li:hover {
+            background-color: lightslategrey;
+        }
+
+        .dropdown-menu > li:hover > .submenu {
+            display: block;
+            color: #0dcaf0;
+        }
+    }
+
+    .nav-item {
+        font-size: large;
+    }
+
+    /* ============ desktop view .end// ============ */
+
+    /* ============ small devices ============ */
+    @media (max-width: 991px) {
+
+        .dropdown-menu .dropdown-menu {
+            margin-left: 0.7rem;
+            margin-right: 0.7rem;
+            margin-bottom: .5rem;
+        }
+
+    }
+
+    /* ============ small devices .end// ============ */
+
+</style>
+
+
+<script type="text/javascript">
+    //	window.addEventListener("resize", function() {
+    //		"use strict"; window.location.reload();
+    //	});
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+
+        /////// Prevent closing from click inside dropdown
+        document.querySelectorAll('.dropdown-menu').forEach(function (element) {
+            element.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        })
+
+
+        // make it as accordion for smaller screens
+        if (window.innerWidth < 992) {
+
+            // close all inner dropdowns when parent is closed
+            document.querySelectorAll('.navbar .dropdown').forEach(function (everydropdown) {
+                everydropdown.addEventListener('hidden.bs.dropdown', function () {
+                    // after dropdown is hidden, then find all submenus
+                    this.querySelectorAll('.submenu').forEach(function (everysubmenu) {
+                        // hide every submenu as well
+                        everysubmenu.style.display = 'none';
+                    });
+                })
+            });
+
+            document.querySelectorAll('.dropdown-menu a').forEach(function (element) {
+                element.addEventListener('click', function (e) {
+
+                    let nextEl = this.nextElementSibling;
+                    if (nextEl && nextEl.classList.contains('submenu')) {
+                        // prevent opening link if link needs to open dropdown
+                        e.preventDefault();
+                        console.log(nextEl);
+                        if (nextEl.style.display == 'block') {
+                            nextEl.style.display = 'none';
+                        } else {
+                            nextEl.style.display = 'block';
+                        }
+
+                    }
+                });
+            })
+        }
+    });
+</script>
+
+{#<div class="container">#}
+<!-- ============= COMPONENT ============== -->
+<nav class="navbar navbar-expand-lg bg-primary mb-0">
+    <div class="container-fluid">
+        <a style="font-family: Sofia; font-style: italic; color: white; font-size: 24pt; text-shadow: 3px 3px 3px #ababab;"
+           class="navbar-brand" href="/home">New Mexico News</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main_nav"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav">
+            <li><a class="dropdown-item text-white bg-transparent h4"
+                   href="{% url "by_region" "Albuquerque" %}">Albuquerque</a>
+            </li>
+        </ul>
+        <div class="collapse navbar-collapse" id="main_nav">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="nav-item dropdown">
+                    <a class="nav-link  dropdown-toggle text-white bg-transparent" href="#"
+                       data-bs-toggle="dropdown"> Filter </a>
+                    <ul class="dropdown-menu dropdown-menu">
+                        <li><a class="dropdown-item" href="#"> REGION &raquo; </a>
+                            <ul class="submenu dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url "state_news" %}">New Mexico</a></li>
+                                <li><a class="dropdown-item" href="{% url "by_region" "Albuquerque" %}">Albuquerque</a>
+                                </li>
+                                <li><a class="dropdown-item" href="{% url "by_region" "Central" %}">Central</a></li>
+                                <li><a class="dropdown-item" href="{% url "by_region" "Northern" %}">Northern</a></li>
+                                <li><a class="dropdown-item" href="{% url "by_region" "Southern" %}">Southern</a></li>
+                                <li><a class="dropdown-item" href="{% url "by_region" "Eastern" %}">Eastern</a></li>
+                                <li><a class="dropdown-item" href="{% url "by_region" "Western" %}">Western</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="#"> CITY &raquo; </a>
+                            <ul class="submenu dropdown-menu">
+                                {% get_cities as cities %}
+                                {% for c in cities %}
+                                    <li><a class="dropdown-item" href="{% url "by_city" c.slug %}"
+                                           class="dropdown-item">{{ c.location }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="#"> COUNTY &raquo; </a>
+                            <ul class="submenu dropdown-menu">
+                                {% get_counties as counties %}
+                                {% for c in counties %}
+                                    <li><a class="dropdown-item" href="{% url "by_county" c.slug %}"
+                                           class="dropdown-item">{{ c.location }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="{% url "by_region" 'Politics' %}">POLITICS </a></li>
+                    </ul>
+                </li>
+                {% if request.user.is_authenticated %}
+                    {% if request.user.is_superuser %}
+                        <li><a class="glyphicon glyphicon-refresh"
+                               style="color: white; background: transparent; font-size: medium"
+                               href="{% url "news-update" %}"></a></li>
+                        <li><a style="color: white; background: transparent" href="/admin"><span
+                                class="glyphicon glyphicon-cog"></span></a></li>
+                    {% endif %}
+                    <li><a style="color: white; background: transparent" href="/logout"><span
+                            class="glyphicon glyphicon-log-out"></span></a></li>
+                {% else %}
+                    {# -------------------------------------------Login Modal------------------------------------------------------------ #}
+                    <li><a style="color: white; background: transparent" href="/signup"><span
+                            class="glyphicon glyphicon-user"></span></a></li>
+                    <li><a style="color: white; background: transparent; font-size: medium" data-toggle="modal"
+                           data-target="#loginModal" class="btn glyphicon glyphicon-log-in"></a>
+                        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-blue">
+                                        <h5>Login</h5>
+                                    </div>
+                                    <div class="modal-title">
+                                        <div class="form-title text-center bg-primary">
+                                            {#                                            <h4>Login</h4>#}
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="d-flex flex-column text-center">
+                                                <form method="POST" action="{% url 'login' %}">
+                                                    {% csrf_token %}
+                                                    <div class="form-group">
+                                                        <input type="text" class="form-control" name="username"
+                                                               id="username"
+                                                               placeholder="Your user name...">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <input type="password" class="form-control" name="password"
+                                                               id="password"
+                                                               placeholder="Your password...">
+                                                    </div>
+                                                    <button href="{% url "login" %}"
+                                                            class="btn btn-info btn-block btn-round">Login
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer d-flex justify-content-center bg-blue">
+                                        <div class="signup-section">Not a member yet? <a href="{% url 'signup' %}"
+                                                                                         class="text-info">
+                                            Sign Up</a>.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                {% endif %}
+                <li class="nav-item"><a style="color: white; font-size: large;" class="nav-link bg-transparent" href="#"
+                                        data-toggle="modal" data-target="#myModal2"><span
+                        class="glyphicon glyphicon-question-sign" aria-hidden="true"></span></a>
+                    <!-- Modal -->
+                    {# -------------------------------------------About Modal------------------------------------------------------------ #}
+                    <div id="myModal2" class="modal fade">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3>About</h3>
+                                </div>
+                                <div class="modal-body">
+                                    <p>New Mexico News is a comprehensive news aggregator that sources articles from
+                                        over 30 online newspapers spanning across the state. We aim to provide you with
+                                        the latest news and updates from various sources in one convenient location.
+
+                                        We encourage you to visit us frequently to stay informed about the latest
+                                        happenings in New Mexico. Your feedback is valuable to us, so please feel free
+                                        to reach out to us at paul@proybal.com with any comments or suggestions you may
+                                        have.
+
+                                        Thank you for visiting New Mexico News. We appreciate your support!</p>
+                                    <p>{% get_about_message %}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div> <!-- navbar-collapse.// -->
+    </div> <!-- container-fluid.// -->
+</nav>
+{% if messages %}
+    {% for message in messages %}
+        <p class="alert alert-info py-3">{{ message }}</p>
+    {% endfor %}
+{% endif %}

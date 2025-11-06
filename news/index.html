@@ -1,0 +1,216 @@
+{% extends 'news/base.html' %}
+{% load tz %}
+{% load static %}
+{% load custom_tags %}
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+{% block style %}
+    <style>
+        .modal-header {
+        {#background-color: cornflowerblue;#} border: none;
+        }
+
+        .modal-title {
+            background-color: transparent;
+        }
+
+        .bg-body {
+            background: lightgrey !important;
+        }
+
+        .news-title {
+            border-bottom: dimgrey medium solid;
+            border-width: thin;
+        {#border-radius: 5px;#}{#border-width: 1px;#} padding: 5px;
+        {#background-color: lightsteelblue;#} margin-bottom: 10px;
+        }
+
+        .news-published {
+            border-top: dimgrey medium solid;
+            border-width: thin;
+        }
+
+        .news-item {
+            margin-top: 10px;
+            border: black medium solid;
+            border-radius: 5px;
+            border-width: 1px;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+        }
+
+        .form-title {
+            margin: -2rem 0rem 2rem;
+        }
+
+        .btn-round {
+            border-radius: 3rem;
+            background-color: lightslategrey;
+        }
+
+        .delimiter {
+            padding: 1rem;
+        }
+
+        .social-buttons {
+        }
+
+        .btn {
+            margin: 0 0.5rem 1rem;
+        }
+
+
+        .signup-section {
+            padding: 0.3rem 0rem;
+        }
+
+        @media (max-width: 600px) {
+            .cards {
+                grid-template-columns: repeat(1, 1fr);
+                display: none;
+            }
+
+            .card {
+                display: none;
+            }
+        }
+
+        @media (min-width: 576px) {
+            .modal-dialog {
+                max-width: 400px;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+        }
+
+        /* Screen larger than 600px? 2 column */
+        @media (min-width: 600px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Style for the "Go to Top" button */
+        .go-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 50px;
+            font-size: 20px;
+            display: none; /* Hide the button by default */
+            cursor: pointer;
+            caret-color: transparent;
+        }
+
+        img {
+            max-height: 400px;
+            max-width: 250px;
+        }
+    </style>
+{% endblock style %}
+
+{% block script %}
+
+    <script>
+        $(document).ready(function () {
+            var isScrolling = false; // Flag to track if scrolling animation is in progress
+
+            // Show/hide the "Go to Top" button based on the scroll position
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 20) {
+                    $('#goToTopButton').fadeIn();
+                } else {
+                    $('#goToTopButton').fadeOut();
+                }
+            });
+
+            // Scroll to the top of the page when the button is clicked
+            $('#goToTopButton').click(function () {
+                if (!isScrolling) {
+                    isScrolling = true; // Set the flag to indicate scrolling animation is in progress
+                    $('html, body').animate({scrollTop: 0}, 500, function () {
+                        isScrolling = false; // Reset the flag once scrolling animation is completed
+                        $(':input').blur(); // Remove focus from input elements
+                    });
+                }
+            });
+        });
+
+    </script>
+
+{% endblock %}
+
+{% block head %}
+    <title>{{ category }} News</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+{% endblock %}
+
+{% block title %}
+    {% include 'news/navbar.html' %}
+{% endblock title %}
+
+
+{% block body %}
+    <div class="container-fluid">
+        <div><h5 style="color: lightgray">{{ news|length }} Articles in {{ category }} News</h5></div>
+        <div class="row">
+            {% for n in news %}
+                <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient">
+                    <div class="news-item bg-body h-100 mx-auto p-5">
+                        <div class="news-title clearfix content-heading"><span>
+                            <img style="margin-right: 5px; border-style: inset" href="{{ n.source_url }}"
+                                 class="pull-left thumbnail"
+                                 src="{{ MEDIA_URL }}{{ n.thumbnail }}"
+                                 width="60vw"
+                                    {#                                height="50vw"#}
+                                 alt="img"><a href="{{ n.source_url }}"><h5 class="m-1">{{ n.source }}</h5></a>
+                                    </span>
+                            {% if n.author %}
+                                <p class="p-0 m-0" style="font-size: x-small">by: {{ n.author }}</p>
+                            {% endif %}
+                        </div>
+                        {% if n.img %}
+                            <a href="{{ n.url }}" style="font-style: italic; font-size: large"><img
+                                    class="mx-auto d-block my-1 py-1" src="{{ n.img }}"
+                                    width='100%'
+                                    alt="img">{{ n.title }}</a>
+                        {% else %}
+                            <a href="{{ n.url }}"><p class="my-0 py-0"
+                                                     style="font-size: large; font-style: italic">{{ n.title }}</p>
+                            </a>
+                        {% endif %}
+                        {% if n.body != n.title %}
+                            <p>{{ n.body }}</p>
+                        {% else %}
+                            <br>
+                        {% endif %}
+
+                        <br>
+                        <div class="news-published">
+                            <p class="m-1" style="font-size: x-small;">Published: {{ n.published }}</p>
+                            {% if n.updated and n.updated != n.published %}
+                                <p style="font-size: x-small">Updated: {{ n.updated }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    </div>
+    <div class="go-to-top" id="goToTopButton">&uarr;</div>
+    <h5 style="color: lightgray; font-size: small" href="mailto: proybal@yahoo.com">created by Paul
+        Roybal</h5>
+    </div>
+    </div>
+{% endblock %}
+
