@@ -7,16 +7,22 @@ from csv import writer
 from django.conf import settings
 import os
 from dateutil import tz
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib import messages
-import time, random, urllib.parse, urllib.robotparser as robotparser
+import time, random
 import requests
-from requests.adapters import HTTPAdapter
-# from urllib3.util.retry import Retry
 from urllib.parse import urljoin
 import re
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+try:
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    SELENIUM_AVAILABLE = True
+except Exception:
+    SELENIUM_AVAILABLE = False
+
 
 def parse_relative_time(relative_time_str):
     """
@@ -1257,35 +1263,70 @@ def scrape_news():
 
         return
 
+
     def nm_political_report():
         """
         ###############################################
         # Scrape "New Mexico Political Report"
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'div', class_name="sp-thumbnail")
-        tags = get_tags(news_source.feed_url, 'article')
-        if not tags:
+        url = news_source.feed_url
+        if not SELENIUM_AVAILABLE:
             return
+        try:
+            from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+            # from selenium import webdriver
+            # from selenium.webdriver.chrome.options import Options
+        except Exception as e:
+            print("Selenium not available:", e)
+            return None
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+            ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+            page = ctx.new_page()
+
+            # Load and wait just enough so articles are in the DOM
+            page.set_default_timeout(10000)
+            page.set_default_navigation_timeout(15000)
+            page.goto(url, wait_until="load")
+            try:
+                page.wait_for_selector("article", timeout=5000)
+            except PWTimeout:
+                pass  # continue; some pages render immediately
+
+            html = page.content()
+            browser.close()  # Playwright is done; parse locally below
+
+        soup = BeautifulSoup(html, "html.parser")
+        print(soup.title.string if soup.title else "No title found")
+
+        # Find article blocks
+        tags = soup.find_all("article")
+        if not tags:
+            # Optional: drop a quick debug snapshot if nothing matched
+            # Path is relative to where this runs
+            with open("nmpr_dump.html", "w", encoding="utf-8") as f:
+                f.write(html)
+            return
+
         for tag in tags:
+            # Uses your helpers; keep them if they already work across sources
+            title = get_value(tag, "h2", "entry-title") or get_value(tag, "h3", "entry-title")
+            url = get_value(tag, "a", attr="href")
 
-            title = get_value(tag, 'img', attr='alt')
+            # Images on WP often sit on .wp-post-image; also try data-src
+            img = get_img(tag, "wp-post-image")
+            if not img:
+                imgel = tag.find("img")
+                if imgel:
+                    img = imgel.get("src") or imgel.get("data-src") or imgel.get("data-lazy-src")
 
-            url = get_value(tag, 'a', attr='href')
+            # Dates: pass the tag name AND the class (most themes use <time class="published">)
+            published = get_date(tag, "time", "published") or get_date(tag, "time", "entry-date")
+            updated = get_date(tag, "time", "updated")
 
-            img = get_img(tag)
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-
-            published = get_date(news_soup, 'meta', property='article:published_time')
-            updated = get_date(news_soup, 'meta', property='article:modified_time')
-
-            meta_tag = news_soup.find("meta", property="og:description")
-            body = meta_tag.get("content", "") if meta_tag else ""
-
-            author = get_value(news_soup, 'span', 'sp-postinfo-author-name')
+            author = ""
+            body = ""  # populate later if you fetch article pages
 
             add_article(title, body, author, published, updated, url, img)
 

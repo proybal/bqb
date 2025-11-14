@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 
 driver = webdriver.Chrome()
 
-driver.get("https://www.lcsun-news.com/news")
+driver.get("https://nmpoliticalreport.com/")
 
 title = driver.title
 

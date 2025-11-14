@@ -125,7 +125,6 @@ class News(models.Model):
     region = models.ForeignKey(Region, null=True, on_delete=models.SET_NULL)
     function = models.CharField(max_length=20)
     published = models.BooleanField(default=False)
-    selenium = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

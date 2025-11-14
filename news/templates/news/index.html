@@ -198,7 +198,7 @@
         <div class="row">
             {% for n in news %}
                 <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient">
-                    <div class="news-item bg-body h-100 mx-auto p-3 rounded">
+                    <div class="news-item bg-body h-100 mx-auto p-3 rounded-5">
                         <div class="news-title clearfix content-heading">
                             <span>
                                 <a href="{{ n.source_url }}">
@@ -218,7 +218,7 @@
                         <div class="news-published mb-4 mt-1"></div>
                         {% if n.img %}
                             <a href="{{ n.url }}" style="font-style: italic; font-size: large">
-                                <img class="mx-auto d-block rounded"
+                                <img class="mx-auto d-block rounded-5"
                                      src="{{ n.img }}"
                                      width='75%' loading="lazy"
                                      alt="{{ source.title }}">
