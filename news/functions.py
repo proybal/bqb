@@ -1,14 +1,19 @@
 import re
 from datetime import datetime
 from urllib.parse import urljoin
+import csv
 
 import requests
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
+from dateutil.relativedelta import relativedelta
 from dateutil.tz import tz
 from urllib3.filepost import writer
 
-from news.views import parse_relative_time
+#from news.views import parse_relative_time
+
+
+
 
 def write_error_log(message):
     FILE_NAME = 'error_log'
@@ -22,6 +27,103 @@ def write_error_log(message):
         time_out = denver.strftime("%m-%d-%Y %H:%M:%S")
         list_data = [time_out, message]
         data.writerow(list_data)
+        file.close()
+
+
+def write_access_log(req, category):
+    """
+        ##  write out access log for visits to home page
+        ##  getting the hostname by socket.gethostname() method
+        # hostname = socket.gethostname()
+        ## getting the IP address using socket.gethostbyname() method
+        # ip_address = socket.gethostbyname(hostname)
+    """
+
+    def get_location(ip_address):
+        # ip_address = '98.60.223.30'
+        response = requests.get(f'https://ipapi.co/{ip_address}/json/').json()
+        location_data = {
+            "ip": ip_address,
+            "city": response.get("city"),
+            "region": response.get("region"),
+            "country": response.get("country_name")
+        }
+        return location_data
+
+    def get_client_ip(req):
+        x_forwarded_for = req.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = req.META.get('REMOTE_ADDR')
+            host = req.META.get('REMOTE_HOST')
+        return ip, host
+
+
+    FILE_NAME = 'access_log'
+    with open(FILE_NAME, 'a', newline='') as file:
+        csv_writer = csv.writer(file)  # Use csv.writer() explicitly
+        ip, hostname = get_client_ip(req)
+        location_data = get_location(ip)
+        from_zone = tz.gettz('UTC')
+        to_zone = tz.gettz('America/Denver')
+        utc = datetime.utcnow()
+        utc = utc.replace(tzinfo=from_zone)
+        denver = utc.astimezone(to_zone)
+        date_out = denver.strftime("%m-%d-%Y")
+        time_out = denver.strftime("%H:%M:%S")
+        list_data = [date_out, time_out, ip, category, location_data['city'], location_data['country']]
+        csv_writer.writerow(list_data)
+
+
+
+
+def parse_relative_time(relative_time_str):
+    """
+    Converts strings like '15 minutes ago' or '3 weeks ago'
+    into an actual datetime object.
+    """
+    now = datetime.now()
+
+    # Match e.g. "15 minutes ago", "3 hours ago"
+    match = re.match(
+        r'(\d+)\s+(seconds?|minutes?|hours?|days?|weeks?|months?|years?)\s+ago',
+        relative_time_str.strip(),
+        re.IGNORECASE
+    )
+
+    if not match:
+        return False
+
+    amount = int(match.group(1))
+    unit = match.group(2).lower()
+
+    # Normalize plural (relativedelta wants plural keys)
+    if not unit.endswith('s'):
+        unit += 's'
+
+    # relativedelta only supports these keys
+    valid_units = {'years', 'months', 'days', 'hours', 'minutes', 'seconds', 'microseconds', 'weeks'}
+    if unit not in valid_units:
+        return False
+
+    delta_args = {unit: amount}
+    past_time = now - relativedelta(**delta_args)
+
+    return past_time
+
+def write_error_log(message):
+    FILE_NAME = 'error_log'
+    with open(FILE_NAME, 'a', newline='') as file:
+        csv_writer = csv.writer(file)
+        from_zone = tz.gettz('UTC')
+        to_zone = tz.gettz('America/Denver')
+        utc = datetime.utcnow()
+        utc = utc.replace(tzinfo=from_zone)
+        denver = utc.astimezone(to_zone)
+        time_out = denver.strftime("%m-%d-%Y %H:%M:%S")
+        list_data = [time_out, message]
+        csv_writer.writerow(list_data)
         file.close()
 
 def get_value(tag, tag_to_find=None, class_name=None, attr=None, text=None):
@@ -105,13 +207,27 @@ def get_img(tag, class_name=None, prefer=None, base_url=None,
             ensure_http=True, strip_query=False, clean_extension=True,
             allow_relative=False, allow_data_uri=False):
     """
-    Find a single <img> and return a URL.
+    Find a single <img> or <picture> and return a URL.
       prefer: one of {'data-style', 'ta-srcset','data-srcset','srcset','data-src','src'}
     """
     if tag is None:
         return ""
 
-    img = tag.find("img", class_=class_name) if class_name is not None else tag.find("img")
+    # Try to find img first, then check for picture tag
+    img = tag.find("picture", class_=class_name) if class_name is not None else tag.find("img")
+
+    # If no img found, try picture > source or picture > img
+    if not img:
+        picture = tag.find("img", class_=class_name) if class_name is not None else tag.find("picture")
+        if picture:
+            # Try to get source tag first (usually has better quality)
+            source = picture.find("source")
+            if source:
+                img = source  # Use source tag for attribute extraction
+            else:
+                # Fall back to img inside picture
+                img = picture.find("img")
+
     if not img:
         return ""
 
@@ -149,7 +265,7 @@ def get_img(tag, class_name=None, prefer=None, base_url=None,
         return u
 
     def trim_after_extension(u: str) -> str:
-        m = re.search(r"(\.jpe?g|\.png|\.gif|\.webp|\.avif|\.bmp|\.tiff)", u, re.IGNORECASE)
+        m = re.search(r"(\.webp|\.jpe?g|\.png|\.gif|\.avif|\.bmp|\.tiff)", u, re.IGNORECASE)
         return u[:m.end()] if m else u
 
     for attr in order:
@@ -166,10 +282,14 @@ def get_img(tag, class_name=None, prefer=None, base_url=None,
     return ""
 
 
-def get_tags(url, tag, class_name=None, id_name=None):
+def get_tags(url, tag, class_name=None, id_name=None, **kwargs):
     """
-    Fetch all tags of a given type (with optional class or id) from a URL.
+    Fetch all tags of a given type (with optional class, id, or other attributes) from a URL.
     Returns a list of BeautifulSoup tag objects or None on failure.
+
+    Example:
+        get_tags(url, 'article', **{'data-section': 'news'})
+        get_tags(url, 'div', class_name='container', **{'data-id': '123'})
     """
     try:
         headers = {
@@ -188,23 +308,29 @@ def get_tags(url, tag, class_name=None, id_name=None):
     soup = BeautifulSoup(response.text, 'html5lib')
 
     # --- filter logic ---------------------------------------------------------
-    # Choose the correct combination of filters
-    if class_name and id_name:
-        tags = soup.find_all(tag, class_=class_name, id=id_name)
-    elif class_name:
-        tags = soup.find_all(tag, class_=class_name)
-    elif id_name:
-        tags = soup.find_all(tag, id=id_name)
+    # Build attrs dictionary for additional attributes
+    attrs = {}
+
+    if class_name:
+        attrs['class'] = class_name
+    if id_name:
+        attrs['id'] = id_name
+
+    # Merge any additional keyword arguments (like data-section)
+    attrs.update(kwargs)
+
+    # Use attrs if we have any filters, otherwise just find by tag
+    if attrs:
+        tags = soup.find_all(tag, attrs=attrs)
     else:
         tags = soup.find_all(tag)
-
     # -------------------------------------------------------------------------
+
     if not tags:
         write_error_log(f"No results found for tag '{tag}' on {url}")
         return None
 
     return tags
-
 
 def get_soup(url):
     try:
@@ -249,7 +375,7 @@ def add_article(news_source, title, body, author, published, updated, url, img):
                  'county': str(news_source.county),
                  'updated': updated, 'last_update': last_update, 'url': url, 'img': img,
                  'thumbnail': str(news_source.cover)}
-    news.append(news_dict)
+    #news.append(news_dict)
     return
 
 
