@@ -1,3 +1,4 @@
+# views.py
 import paramiko
 import json
 from .models import News
