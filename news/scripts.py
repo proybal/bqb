@@ -1,3 +1,4 @@
+# scripts.py
 import requests
 from django.conf import settings
 from .models import News
