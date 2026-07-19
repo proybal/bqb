@@ -327,7 +327,7 @@ def get_tags(url, tag, class_name=None, id_name=None, **kwargs):
     # -------------------------------------------------------------------------
 
     if not tags:
-        write_error_log(f"No results found for tag '{tag}' on {url}")
+        write_error_log(f"No results found for tag '{tag}' on {url} response: {response.status_code}")
         return None
 
     return tags

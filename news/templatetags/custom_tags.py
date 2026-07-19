@@ -1,6 +1,8 @@
 import textwrap
 
 from django import template
+from django.conf import settings
+
 from news.models import Counties, Cities
 from datetime import datetime
 from dateutil import tz
@@ -76,14 +78,33 @@ def get_news(filter_by=None, filter_value=None, search=None):
 
 @register.simple_tag
 def get_about_message():
-    filename = 'news.json'
-    to_zone = tz.gettz('America/Denver')
-    utc = datetime.fromtimestamp(os.path.getmtime(filename))
-    date_time = utc.astimezone(to_zone)
-    with open('news.json') as json_file:
-        news = json.load(json_file)
+    # Put news.json somewhere stable; this assumes it lives in BASE_DIR (same level as manage.py)
+    filename = os.path.join(settings.BASE_DIR, "news.json")
 
-        message = mark_safe(f"""\
+    to_zone = tz.gettz("America/Denver")
+
+    # If missing or empty, don't crash the page
+    if (not os.path.exists(filename)) or os.path.getsize(filename) == 0:
+        return mark_safe("""
+            <p>New Mexico News is updating right now…</p>
+            <small><p>Last Updated: unavailable (news feed is empty).</p></small>
+        """)
+
+    # Load safely
+    try:
+        mtime = os.path.getmtime(filename)
+        dt_local = datetime.fromtimestamp(mtime, tz=tz.tzutc()).astimezone(to_zone)
+
+        with open(filename, "r", encoding="utf-8") as json_file:
+            news = json.load(json_file)
+
+    except json.JSONDecodeError:
+        return mark_safe("""
+            <p>New Mexico News is updating right now…</p>
+            <small><p>Last Updated: unavailable (news feed not ready).</p></small>
+        """)
+
+    message = mark_safe(f"""\
         <p>New Mexico News is a comprehensive news aggregator that sources articles from
         over 30 online newspapers spanning across the state. We aim to provide you with
         the latest news and updates from various sources in one convenient location.</p>
@@ -95,5 +116,6 @@ def get_about_message():
 
         <p>Thank you for visiting New Mexico News. We appreciate your support!</p>
 
-        <small><p>Last Updated on {date_time.strftime("%A, %B %d, %Y %I:%M%p")} with {len(news)} articles.</p></small>""")
+        <small><p>Last Updated on {dt_local.strftime("%A, %B %d, %Y %I:%M%p")} with {len(news)} articles.</p></small>
+    """)
     return message
