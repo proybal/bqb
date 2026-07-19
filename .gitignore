@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Django runtime
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Secrets
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp/build
+*.tmp
+*.bak
+*.swp
+dist/
+build/
+*.egg-info/
+/bqb/.idea/

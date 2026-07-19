@@ -1,0 +1,208 @@
+{% load static %}
+{% load custom_tags %}
+<style>
+    /* Your existing CSS styles here */
+</style>
+<script>
+
+</script>
+
+
+<nav class="navbar navbar-expand-lg bg-primary">
+    <div class="container-fluid">
+        <a style="font-family: Sofia; font-style: italic; color: white; font-size: 24pt; text-shadow: 3px 3px 3px #ababab;"
+           class="navbar-brand" href="/home">New Mexico News</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <!-- Albuqueruqe  -->
+                <li><a class="resetSearch dropdown-item h4 text-white bg-transparent px-5"
+                       href="{% url "by_region" "Albuquerque" %}">Albuquerque</a></li>
+
+                <!-- Region dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle h4 text-white bg-transparent" role="button"
+                       id="navbarDropdownRegion" data-bs-toggle="dropdown" aria-expanded="false" href="#">Region</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownRegion">
+                        <li><a class="resetSearch dropdown-item h4" href="{% url "state_news" %}">New Mexico</a></li>
+                        <li><a class="resetSearch dropdown-item h4" href="{% url "by_region" "Albuquerque" %}">Albuquerque</a></li>
+                        <li><a class="resetSearch dropdown-item h4" href="{% url "by_region" "Central" %}">Central</a></li>
+                        <li><a class="resetSearch dropdown-item h4" href="{% url "by_region" "Northern" %}">Northern</a></li>
+                        <li><a class="resetSearch dropdown-item h4" href="{% url "by_region" "Southern" %}">Southern</a></li>
+                        <li><a class="resetSearch dropdown-item h4" href="{% url "by_region" "Eastern" %}">Eastern</a></li>
+                        <li><a class="resetSearch dropdown-item h4" href="{% url "by_region" "Western" %}">Western</a></li>
+                    </ul>
+                </li>
+
+                <!-- County dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle h4 text-white px-5" id="navbarDropdownCounty" href="#"
+                       data-bs-toggle="dropdown" aria-expanded="false">County</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownCounty">
+                        {% get_counties as counties %}
+                        {% for c in counties %}
+                            <li><a class="resetSearch dropdown-item" href="{% url "by_county" c.slug %}">{{ c.location }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+
+                <!-- City dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle h4 text-white px-5" id="navbarDropDownCity" href="#"
+                       data-bs-toggle="dropdown" aria-expanded="false">City</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropDownCity">
+                        {% get_cities as cities %}
+                        {% for c in cities %}
+                            <li><a class="resetSearch dropdown-item h5" href="{% url "by_city" c.slug %}">{{ c.location }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+
+                <!-- Politics -->
+                <li class="nav-item">
+                    <a class="resetSearch nav-link text-white h4 bg-transparent px-5" href="{% url "by_region" 'Politics' %}">Politics</a>
+                </li>
+
+
+                <!-- Search -->
+                <li>
+                    <input type="hidden" id="searchBaseURL" value="{% url 'search' 'xxxxx' %}">
+                    <form id="searchForm" class="d-flex mt-4 mx-5" role="search">
+                        <input id="searchInput" class="form-control me-2" type="search" name="search"
+                               placeholder="Search" aria-label="Search">
+                        <button class="btn btn-outline-primary bg-white" type="submit">Search</button>
+                    </form>
+                </li>
+
+
+
+                {% if request.user.is_authenticated %}
+                    {% if request.user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="{% url "news-update" %}">
+                                <span class="glyphicon glyphicon-refresh align-bottom"
+                                      style="color: white; font-size: 18px"></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin">
+                                <span class="glyphicon glyphicon-cog align-bottom"
+                                      style="color: white; font-size: 18px"></span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="/logout">
+                            <span class="glyphicon glyphicon-log-out align-bottom"
+                                  style="color: white; font-size: 18px"></span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="/signup">
+                            <span class="glyphicon glyphicon-user align-bottom"
+                                  style="color: white; font-size: 18px"></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="#" data-toggle="modal"
+                           data-target="#loginModal">
+                            <span class="glyphicon glyphicon-log-in align-bottom"
+                                  style="color: white; font-size: 18px"></span>
+                        </a>
+
+                        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-blue">
+                                        <h5>Login</h5>
+                                    </div>
+                                    <div class="modal-title">
+                                        <div class="form-title text-center bg-primary">
+                                            {#                                            <h4>Login</h4>#}
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="d-flex flex-column text-center">
+                                                <form method="POST" action="{% url 'login' %}">
+                                                    {% csrf_token %}
+                                                    <div class="form-group">
+                                                        <input type="text" class="form-control" name="username"
+                                                               id="username"
+                                                               placeholder="Your user name...">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <input type="password" class="form-control" name="password"
+                                                               id="password"
+                                                               placeholder="Your password...">
+                                                    </div>
+                                                    <button href="{% url "login" %}"
+                                                            class="btn btn-info btn-block btn-round">Login
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer d-flex justify-content-center bg-blue">
+                                        <div class="signup-section">Not a member yet? <a href="{% url 'signup' %}"
+                                                                                         class="text-info">
+                                            Sign Up</a>.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                {% endif %}
+            </ul>
+        </div> <!-- navbar-collapse.// -->
+    </div> <!-- container-fluid.// -->
+</nav>
+<script type="text/javascript">
+
+    document.getElementById("searchForm").addEventListener("submit", function (event) {
+        // Prevent default form submission behavior
+        event.preventDefault();
+        const baseURL = document.getElementById("searchBaseURL").value;
+        // Get the search term from the input field
+        const searchTerm = document.getElementById("searchInput").value;
+        // Construct the URL with the search term
+        if (searchTerm !== '') {
+            const searchURL = baseURL.replace("xxxxx", encodeURIComponent(searchTerm));
+            window.location.href = searchURL;
+        }
+    })
+    // Retrieve the input value from local storage when the page loads
+    window.onload = function () {
+        const storedValue = localStorage.getItem("searchInput");
+        if (storedValue) {
+            document.getElementById("searchInput").value = storedValue;
+        }
+    };
+
+    // Store the input value in local storage when the input field changes
+    document.getElementById("searchInput").addEventListener("input", function () {
+        localStorage.setItem("searchInput", this.value);
+    });
+    // Reset the input field when any link with the 'resetSearch' class is clicked
+    const resetLinks = document.querySelectorAll(".resetSearch");
+    if (resetLinks) {
+        resetLinks.forEach(function (link) {
+            link.addEventListener("click", function (event) {
+                event.preventDefault(); // Prevent the default link behavior
+                // document.getElementById("searchInput").value = ''; // Reset the input field's value
+                // Handle navigation explicitly if necessary
+                const href = link.getAttribute("href");
+                if (href) {
+                    window.location.href = href; // Navigate to the URL specified in the href attribute
+                }
+                localStorage.setItem("searchInput", "");
+            });
+        })
+    }
+    ;
+</script>
