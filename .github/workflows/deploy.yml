@@ -31,7 +31,7 @@ jobs:
 
             echo "Installing dependencies..."
             .venv/bin/python -m pip install \
-              -r requirements-almalinux.txt
+              -r requirements.txt
 
             echo "Checking Django..."
             .venv/bin/python manage.py check
