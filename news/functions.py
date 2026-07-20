@@ -51,12 +51,15 @@ def write_access_log(req, category):
         return location_data
 
     def get_client_ip(req):
-        x_forwarded_for = req.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = req.META.get("HTTP_X_FORWARDED_FOR")
+
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
+            ip = x_forwarded_for.split(",")[0].strip()
         else:
-            ip = req.META.get('REMOTE_ADDR')
-            host = req.META.get('REMOTE_HOST')
+            ip = req.META.get("REMOTE_ADDR", "")
+
+        host = req.get_host()
+
         return ip, host
 
 
