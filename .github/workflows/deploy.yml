@@ -20,36 +20,24 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            set -e
+script: |
+  cd /home/${{ secrets.VPS_USERNAME }}/public_html/bqb
 
-            cd /home/burquebr/public_html/bqb
+  source .venv/bin/activate
 
-            echo "Fetching latest BQB code..."
-            git fetch origin
-            git reset --hard origin/main
+  pip install -r requirements.txt
 
-            echo "Installing dependencies..."
-            .venv/bin/python -m pip install \
-              -r requirements.txt
+  echo "Checking Django..."
+  python manage.py check
 
-            echo "Checking Django..."
-            .venv/bin/python manage.py check
+  echo "Applying migrations..."
+  python manage.py migrate --noinput
 
-            echo "Applying migrations..."
-            .venv/bin/python manage.py migrate --noinput
+  echo "Creating required directories..."
+  mkdir -p static/images
+  mkdir -p staticfiles
 
-            echo "Collecting static files..."
-            .venv/bin/python manage.py collectstatic --noinput
+  echo "Collecting static files..."
+  python manage.py collectstatic --noinput
 
-            echo "Restarting Gunicorn..."
-            sudo /bin/systemctl restart burquebro
-            sudo /bin/systemctl is-active --quiet burquebro
-
-            echo "Testing local application..."
-            curl --fail --silent --show-error \
-              -H "Host: burquebro.com" \
-              http://127.0.0.1:8001/ \
-              >/dev/null
-
-            echo "BQB deployment complete."
+  touch tmp/restart.txt

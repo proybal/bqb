@@ -8,3 +8,4 @@ nameparser==1.0.6
 six==1.15.0
 celery==5.2.7
 timeago~=1.0.16
+django-widget-tweaks==1.4.12
