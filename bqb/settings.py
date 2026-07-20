@@ -23,8 +23,14 @@ SECRET_KEY = 'al=a@tpu2!$q-=js_rp_proakz#0%0mjqokvr)_fxmjwxegtq('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 MAX_ARTICLES = 10
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "burquebro.com",
+    "www.burquebro.com",
+    "server.burquebro.com",
+]
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Application definition
 
