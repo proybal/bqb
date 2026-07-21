@@ -36,5 +36,3 @@ jobs:
             python manage.py migrate --noinput
             mkdir -p static/images staticfiles
             python manage.py collectstatic --noinput
-            sudo systemctl restart burquebro
-            sudo systemctl is-active --quiet burquebro
