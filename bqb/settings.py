@@ -1,5 +1,5 @@
 """
-Django settings for bqb news project. pr
+settings.py : Django settings for bqb news project. pr
 
 """
 
