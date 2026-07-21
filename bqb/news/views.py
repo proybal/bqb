@@ -1,4 +1,4 @@
-# views.py -pr
+# views.py
 import re
 import sys
 import time
