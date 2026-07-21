@@ -8,14 +8,8 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-# BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ACTUAL_DIR = os.path.dirname(__file__)
-# TEMPLATE_PATH = os.path.join(ACTUAL_DIR, 'templates')
-# STATIC_PATH = os.path.join(ACTUAL_DIR, 'static')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
+ACTUAL_DIR = os.path.dirname(__file__)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'al=a@tpu2!$q-=js_rp_proakz#0%0mjqokvr)_fxmjwxegtq('
