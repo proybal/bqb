@@ -58,7 +58,7 @@ def write_access_log(req, category):
         else:
             ip = req.META.get("REMOTE_ADDR", "")
 
-        host = req.get_host()
+        host = req.META.get("REMOTE_HOST", "") or req.get_host()
 
         return ip, host
 
