@@ -5,39 +5,29 @@ on:
     branches:
       - main
 
-concurrency:
-  group: bqb-production
-  cancel-in-progress: false
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Bluehost VPS
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
+          username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script_stop: true
           script: |
-            cd /home/${{ secrets.VPS_USERNAME }}/public_html/bqb
-
+            set -e
+            cd "$HOME/public_html/bqb"
+            git fetch origin
+            git reset --hard origin/main
             source .venv/bin/activate
-
-            pip install -r requirements.txt
-
-            echo "Checking Django..."
+            python -m pip install -r requirements.txt
             python manage.py check
-
-            echo "Applying migrations..."
             python manage.py migrate --noinput
-
-            echo "Creating required directories..."
-            mkdir -p static/images
-            mkdir -p staticfiles
-
-            echo "Collecting static files..."
+            mkdir -p static/images staticfiles
             python manage.py collectstatic --noinput
-
-            touch tmp/restart.txt
+            sudo systemctl restart burquebro
+            sudo systemctl is-active --quiet burquebro
