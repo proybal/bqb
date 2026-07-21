@@ -1,12 +1,12 @@
 # views.py
-import paramiko
 import json
-from .models import News
+from .models import News, ScrapeJob
 import datetime
 from django.conf import settings
 import os
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
 import time, random
 
 try:
@@ -1766,50 +1766,16 @@ def scrape_news():
     return news
 
 
+@user_passes_test(lambda user: user.is_superuser)
 def news_update(req):
-    # VPS connection info
-    HOST = "burquebro.com"
-    PORT = 22
-    USERNAME = "burquebr"  # your SSH user
-    PASSWORD = "Chimichanga58*"  # or use SSH key instead
+    active_job = ScrapeJob.objects.filter(
+        status__in=(ScrapeJob.STATUS_QUEUED, ScrapeJob.STATUS_RUNNING)
+    ).first()
 
-    # Local and remote paths
-    LOCAL_FILE = "news.json"
-    REMOTE_PATH = "/home/burquebr/www/bqb/news.json"
+    if active_job:
+        messages.info(req, f"News update job {active_job.pk} is already {active_job.status}.")
+    else:
+        job = ScrapeJob.objects.create(requested_by=req.user, source="web")
+        messages.success(req, f"News update job {job.pk} was queued.")
 
-    start_time = time.time()
-    news = scrape_news()
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    # Calculate hours, minutes, and seconds
-    hours, remainder = divmod(elapsed_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    parts = []
-    if hours > 0:
-        parts.append(f"{int(hours)} hours")
-    if minutes > 0:
-        parts.append(f"{int(minutes)} minutes")
-    if seconds > 0:
-        parts.append(f"{int(seconds)} seconds")
-    try:
-        # Create SSH client
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD)
-
-        # Open SFTP session
-        sftp = ssh.open_sftp()
-        print("Uploading news.json...")
-
-        sftp.put(LOCAL_FILE, REMOTE_PATH)
-
-        sftp.close()
-        ssh.close()
-        print("Upload completed successfully!")
-
-    except Exception as e:
-        print("Error:", e)
-
-    messages.info(req, f"Updated in {','.join(parts)}")
-    return render(req, 'news/index.html', {'category': 'New Mexico', 'news': news})
+    return redirect("state_news")

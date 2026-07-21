@@ -12,10 +12,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ACTUAL_DIR = os.path.dirname(__file__)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'al=a@tpu2!$q-=js_rp_proakz#0%0mjqokvr)_fxmjwxegtq('
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-development-key-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
 MAX_ARTICLES = 10
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -134,8 +134,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'proybal54@gmail.com'
-EMAIL_HOST_PASSWORD = 'Chimichanga58'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_PORT = 587
 
 BQB_URL = ""

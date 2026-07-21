@@ -1,0 +1,16 @@
+[Unit]
+Description=BurqueBro News Scrape Worker
+After=network.target burquebro.service
+
+[Service]
+Type=simple
+User=burquebr
+Group=burquebr
+WorkingDirectory=/home/burquebr/public_html/bqb
+Environment="PATH=/home/burquebr/public_html/bqb/.venv/bin"
+ExecStart=/home/burquebr/public_html/bqb/.venv/bin/python manage.py run_scrape_worker --poll 5
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
