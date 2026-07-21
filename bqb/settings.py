@@ -1,5 +1,5 @@
 """
-Django settings for bqb project. pr
+Django settings for bqb news project. pr
 
 """
 
