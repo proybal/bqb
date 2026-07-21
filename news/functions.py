@@ -336,14 +336,34 @@ def get_tags(url, tag, class_name=None, id_name=None, **kwargs):
     return tags
 
 def get_soup(url):
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/92.0.4515.131 Safari/537.36"
+        )
+    }
+
     try:
-        news_request = requests.get(url, headers={
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36'})
-        # news_request = requests.get(url)
-    except Exception as e:
-        write_error_log(e)
+        news_request = requests.get(
+            url,
+            headers=headers,
+            timeout=(10, 20),
+        )
+        news_request.raise_for_status()
+
+        return BeautifulSoup(
+            news_request.content,
+            "html.parser",
+        )
+
+    except requests.RequestException as e:
+        write_error_log(f"Request failed for {url}: {e}")
         return False
-    return BeautifulSoup(news_request.text, 'html5lib')
+
+    except Exception as e:
+        write_error_log(f"Parsing failed for {url}: {e}")
+        return False
 
 
 def add_article(news_source, title, body, author, published, updated, url, img):
