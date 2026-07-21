@@ -62,7 +62,6 @@ def write_access_log(req, category):
 
         return ip, host
 
-
     FILE_NAME = 'access_log'
     with open(FILE_NAME, 'a', newline='') as file:
         csv_writer = csv.writer(file)  # Use csv.writer() explicitly
