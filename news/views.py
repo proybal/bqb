@@ -107,7 +107,7 @@ def index(request):
     with open('news.json') as json_file:
         news = json.load(json_file)
     news = truncate_news_body(news)
-    news = diversify_news(news)(news)
+    news = diversify_news(news)
     return render(request, 'news/index.html', {'category': category, 'news': news})
 
 
