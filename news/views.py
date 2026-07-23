@@ -1204,9 +1204,16 @@ def scrape_news():
 
             body = get_value(tag, 'div', 'entry-summary')
 
-            img = get_img(tag)
+            img = get_img(
+                tag,
+                base_url=news_source.feed_url,
+                clean_extension=False,
+            )
 
-            url = news_source.feed_url + get_value(tag, 'a', attr='href')
+            url = urljoin(
+                news_source.feed_url,
+                get_value(tag, "a", attr="href")
+            )
 
             published = get_date(tag, 'span', 'updated')
 
@@ -1703,7 +1710,7 @@ def scrape_news():
             try:
                 eval(function + "()")
             except Exception as e:
-                write_error_log(f"Error occured processing: {news_source.function} Error: {e} ")
+                write_error_log(f"Error occurred processing: {news_source.function} Error: {e} ")
 
 
     # Remove duplicate entries

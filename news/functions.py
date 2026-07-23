@@ -206,81 +206,163 @@ def get_meta(soup, value):
     return False
 
 
-def get_img(tag, class_name=None, prefer=None, base_url=None,
-            ensure_http=True, strip_query=False, clean_extension=True,
-            allow_relative=False, allow_data_uri=False):
+def get_img(
+        tag,
+        class_name=None,
+        prefer=None,
+        base_url=None,
+        ensure_http=True,
+        strip_query=False,
+        clean_extension=True,
+        allow_relative=False,
+        allow_data_uri=False
+):
     """
-    Find a single <img> or <picture> and return a URL.
-      prefer: one of {'data-style', 'ta-srcset','data-srcset','srcset','data-src','src'}
+    Find an image inside a BeautifulSoup tag and return the best-quality URL.
+
+    Checks:
+      1. <picture><source>
+      2. <picture><img>
+      3. regular <img>
+
+    For srcset attributes, selects the largest image rather than
+    the first, usually low-resolution, candidate.
     """
     if tag is None:
         return ""
 
-    # Try to find img first, then check for picture tag
-    img = tag.find("picture", class_=class_name) if class_name is not None else tag.find("img")
+    picture = tag.find("picture", class_=class_name) if class_name else tag.find("picture")
 
-    # If no img found, try picture > source or picture > img
-    if not img:
-        picture = tag.find("img", class_=class_name) if class_name is not None else tag.find("picture")
-        if picture:
-            # Try to get source tag first (usually has better quality)
-            source = picture.find("source")
-            if source:
-                img = source  # Use source tag for attribute extraction
-            else:
-                # Fall back to img inside picture
-                img = picture.find("img")
+    image_elements = []
 
-    if not img:
+    if picture:
+        # Sources often contain the largest WebP/AVIF versions.
+        image_elements.extend(picture.find_all("source"))
+
+        picture_img = picture.find("img")
+        if picture_img:
+            image_elements.append(picture_img)
+
+    # Also check a regular img outside or instead of picture.
+    regular_img = (
+        tag.find("img", class_=class_name)
+        if class_name
+        else tag.find("img")
+    )
+
+    if regular_img and regular_img not in image_elements:
+        image_elements.append(regular_img)
+
+    if not image_elements:
         return ""
 
-    # Prefer site-specific srcset first (like 'ta-srcset'), then standard attrs
-    order = [prefer] if prefer else ["data-style", "ta-srcset", "data-srcset", "srcset", "data-src", "src"]
-    order = [a for a in order if a]
+    default_order = [
+        "data-style",
+        "ta-srcset",
+        "data-srcset",
+        "srcset",
+        "data-lazy-srcset",
+        "data-original",
+        "data-lazy-src",
+        "data-src",
+        "src",
+    ]
 
-    def pick_from_srcset(s: str) -> str:
-        # take the first candidate: "url 320w, url2 640w" -> "url"
-        first = s.split(",", 1)[0].strip()
-        return first.split()[0] if first else ""
+    order = [prefer] if prefer else default_order
+    order = [attr for attr in order if attr]
 
-    def normalize(u: str) -> str:
-        if not u:
+    def normalize(image_url):
+        if not image_url:
             return ""
-        u = u.strip()
 
-        # Drop data: unless explicitly allowed
-        if u.startswith("data:"):
-            return u if allow_data_uri else ""
+        image_url = image_url.strip()
 
-        if u.startswith("//"):
-            u = "https:" + u
+        if image_url.startswith("data:"):
+            return image_url if allow_data_uri else ""
 
-        if base_url and not (u.startswith("http://") or u.startswith("https://")):
-            u = urljoin(base_url, u)
+        if image_url.startswith("//"):
+            image_url = "https:" + image_url
 
-        if not (u.startswith("http://") or u.startswith("https://")):
+        if base_url and not image_url.startswith(("http://", "https://")):
+            image_url = urljoin(base_url, image_url)
+
+        if not image_url.startswith(("http://", "https://")):
             if ensure_http and not allow_relative:
                 return ""
-            # else keep relative
 
-        if strip_query and "?" in u:
-            u = u.split("?", 1)[0]
-        return u
+        if strip_query and "?" in image_url:
+            image_url = image_url.split("?", 1)[0]
 
-    def trim_after_extension(u: str) -> str:
-        m = re.search(r"(\.webp|\.jpe?g|\.png|\.gif|\.avif|\.bmp|\.tiff)", u, re.IGNORECASE)
-        return u[:m.end()] if m else u
+        return image_url
 
-    for attr in order:
-        val = img.get(attr)
-        if not val:
-            continue
-        url = pick_from_srcset(val) if attr.endswith("srcset") else val
-        url = normalize(url)
-        if url:
-            if clean_extension:
-                url = trim_after_extension(url)
-            return url
+    def trim_after_extension(image_url):
+        match = re.search(
+            r"(\.webp|\.jpe?g|\.png|\.gif|\.avif|\.bmp|\.tiff)",
+            image_url,
+            re.IGNORECASE,
+        )
+        return image_url[:match.end()] if match else image_url
+
+    def pick_best_from_srcset(srcset):
+        """
+        Select the largest candidate from a srcset.
+
+        Supports:
+          image.jpg 300w
+          image.jpg 1200w
+          image.jpg 1x
+          image.jpg 2x
+        """
+        candidates = []
+
+        for entry in srcset.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+
+            parts = entry.split()
+            image_url = parts[0]
+            score = 1
+
+            if len(parts) > 1:
+                descriptor = parts[1].lower()
+
+                try:
+                    if descriptor.endswith("w"):
+                        score = int(descriptor[:-1])
+                    elif descriptor.endswith("x"):
+                        # Give density descriptors a comparable numeric score.
+                        score = float(descriptor[:-1]) * 1000
+                except ValueError:
+                    score = 1
+
+            candidates.append((score, image_url))
+
+        if not candidates:
+            return ""
+
+        candidates.sort(key=lambda item: item[0], reverse=True)
+        return candidates[0][1]
+
+    for element in image_elements:
+        for attr in order:
+            value = element.get(attr)
+
+            if not value:
+                continue
+
+            if attr.endswith("srcset"):
+                image_url = pick_best_from_srcset(value)
+            else:
+                image_url = value
+
+            image_url = normalize(image_url)
+
+            if image_url:
+                if clean_extension:
+                    image_url = trim_after_extension(image_url)
+
+                return image_url
 
     return ""
 
