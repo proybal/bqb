@@ -1,8 +1,14 @@
 from django.contrib import admin
+from django.utils import timezone
 
 from .forms import NewsForm
 from .models import Cities, Counties, News, Region, ScrapeJob
 
+
+# Django Admin branding
+admin.site.site_header = "BurqueBro Administration"
+admin.site.site_title = "BurqueBro Admin"
+admin.site.index_title = "BurqueBro Site Management"
 
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
@@ -40,6 +46,48 @@ class RegionAdmin(admin.ModelAdmin):
 
 @admin.register(ScrapeJob)
 class ScrapeJobAdmin(admin.ModelAdmin):
-    list_display = ("id", "status", "source", "requested_by", "created_at", "started_at", "finished_at", "article_count")
-    list_filter = ("status", "source")
-    readonly_fields = ("created_at", "started_at", "finished_at", "article_count", "message")
+    list_display = (
+        "id",
+        "status",
+        "source",
+        "requested_by",
+        "created_at",
+        "started_at",
+        "finished_at",
+        "elapsed_time",
+    )
+
+    list_filter = (
+        "status",
+        "source",
+        "created_at",
+    )
+
+    search_fields = (
+        "source",
+        "requested_by__username",
+        "error_message",
+    )
+
+    ordering = ("-created_at",)
+
+    @admin.display(description="Elapsed Time")
+    def elapsed_time(self, obj):
+        if not obj.started_at:
+            return "Not started"
+
+        end_time = obj.finished_at or timezone.now()
+        elapsed = end_time - obj.started_at
+
+        total_seconds = max(0, int(elapsed.total_seconds()))
+
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        if hours:
+            return f"{hours}h {minutes}m {seconds}s"
+
+        if minutes:
+            return f"{minutes}m {seconds}s"
+
+        return f"{seconds}s"
