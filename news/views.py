@@ -1789,27 +1789,45 @@ def scrape_news():
     }
 
     news = []
+    news_list = News.objects.filter(published=True)
 
-    for news_source in News.objects.filter(published=True):
+    for news_source in news_list:
+        function_name = (news_source.function or "").strip()
 
-        scraper = SCRAPERS.get(news_source.function)
+        # Support old database values such as "abqjournal()".
+        if function_name.endswith("()"):
+            function_name = function_name[:-2].strip()
+
+        scraper = SCRAPERS.get(function_name)
 
         if scraper is None:
             write_error_log(
-                f"No scraper registered for '{news_source.function}' "
-                f"({news_source.title})"
+                f"No scraper registered for source='{news_source.title}', "
+                f"function={news_source.function!r}, "
+                f"normalized={function_name!r}"
             )
             continue
 
-        if settings.DEBUG:
-            scraper(news_source)
-        else:
-            try:
-                scraper(news_source)
-            except Exception as e:
-                write_error_log(
-                    f"Error processing {news_source.title}: {e}"
-                )
+        article_count_before = len(news)
+
+        try:
+            scraper()
+        except Exception as e:
+            write_error_log(
+                f"Error processing source='{news_source.title}', "
+                f"function='{function_name}': "
+                f"{type(e).__name__}: {e}"
+            )
+            continue
+
+        articles_added = len(news) - article_count_before
+
+        if articles_added == 0:
+            write_error_log(
+                f"Scraper completed but added no articles: "
+                f"source='{news_source.title}', "
+                f"function='{function_name}'"
+            )
 
     # Remove duplicate entries
     news = remove_duplicates(news)
