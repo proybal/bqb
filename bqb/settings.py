@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_crontab',
     'accounts',
     'pages',
     'slideshow',
@@ -141,8 +140,5 @@ EMAIL_PORT = 587
 
 BQB_URL = ""
 
-CRONJOBS = [
-    ('*/5 * * * *', 'bqb.news.scrape')
-]
 
 # CELERY_BROKER_URL = 'redis://localhost:6379'
