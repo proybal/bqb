@@ -9,6 +9,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 import time, random
 from django.views.decorators.http import require_POST
+from collections import defaultdict
+
+
 
 try:
     from selenium import webdriver
@@ -20,24 +23,56 @@ except Exception:
 from .functions import *
 
 
-def shuffle_news(news):
-    # Group news randomly by day
-    daily_news = []
-    new_news = []
-    day = ""
-    for item in news:
-        if item['last_update'][:10] == day:
-            daily_news.append(item)
-        else:
-            day = item['last_update'][:10]
-            random.shuffle(daily_news)
-            new_news = new_news + daily_news
-            daily_news.clear()
-            daily_news.append(item)
-    new_news = new_news + daily_news
+def diversify_news(news, top_limit=20, max_per_source=2):
+    """
+    Diversify the first part of the feed.
 
-    return new_news
+    - Max 2 stories per source in the first 15.
+    - Never show the same source twice in a row if possible.
+    - Preserve the original (date) order as much as possible.
+    """
 
+    remaining = list(news)
+    selected = []
+
+    counts = defaultdict(int)
+    last_source = None
+
+    while remaining and len(selected) < top_limit:
+        chosen = None
+
+        for i, article in enumerate(remaining):
+            source = article["source"]
+
+            if counts[source] >= max_per_source:
+                continue
+
+            if source == last_source:
+                continue
+
+            chosen = i
+            break
+
+        if chosen is None:
+            for i, article in enumerate(remaining):
+                source = article["source"]
+
+                if counts[source] < max_per_source:
+                    chosen = i
+                    break
+
+        if chosen is None:
+            break
+
+        article = remaining.pop(chosen)
+
+        selected.append(article)
+        counts[article["source"]] += 1
+        last_source = article["source"]
+
+    selected.extend(remaining)
+
+    return selected
 
 def remove_duplicates(news):
     seen = set()
@@ -72,7 +107,7 @@ def index(request):
     with open('news.json') as json_file:
         news = json.load(json_file)
     news = truncate_news_body(news)
-    news = shuffle_news(news)
+    news = diversify_news(news)(news)
     return render(request, 'news/index.html', {'category': category, 'news': news})
 
 
@@ -92,7 +127,7 @@ def search(request, search):
         if search in title or search in body:
             matched_items.append(item)
 
-    news = shuffle_news(matched_items)
+    news = diversify_news(news)(matched_items)
 
     # random.shuffle(news)
     return render(request, 'news/index.html', {'category': category, 'news': news})
@@ -103,7 +138,7 @@ def state_news(req):
     write_access_log(req, state)
     with open('news.json') as json_file:
         news = json.load(json_file)
-    news = shuffle_news(news)
+    news = diversify_news(news)
     news = truncate_news_body(news)
     return render(req, 'news/index.html', {'category': state, 'news': news})
 
@@ -111,19 +146,32 @@ def state_news(req):
 def by_region(req, region):
     write_access_log(req, region)
     reg = region
-    with open('news.json') as json_file:
-        news = json.load(json_file)
-    if region.find('ern'):
-        cat = region[:region.find('ern')]
-    new_news = []
-    for r in news:
-        news_cat = r['region']
-        if news_cat.find(reg) != -1:
-            new_news.append(r)
-    news = shuffle_news(new_news)
-    news = truncate_news_body(news)
-    return render(req, 'news/index.html', {'category': region, 'news': news})
 
+    with open("news.json") as json_file:
+        news = json.load(json_file)
+
+    if region.find("ern"):
+        cat = region[:region.find("ern")]
+
+    new_news = []
+
+    for article in news:
+        news_cat = article["region"]
+
+        if news_cat.find(reg) != -1:
+            new_news.append(article)
+
+    news = diversify_news(new_news)
+    news = truncate_news_body(news)
+
+    return render(
+        req,
+        "news/index.html",
+        {
+            "category": region,
+            "news": news,
+        },
+    )
 
 def by_city(req, city):
     write_access_log(req, city)
@@ -134,7 +182,7 @@ def by_city(req, city):
         if news_item['city'] == city:
             new_news.append(news_item)
     city = city.replace("_", " ")
-    news = shuffle_news(new_news)
+    news = diversify_news(new_news)
     news = truncate_news_body(news)
     return render(req, 'news/index.html', {'category': city, 'news': news})
 
@@ -148,7 +196,7 @@ def by_county(req, county):
         if news_item['county'] == county:
             new_news.append(news_item)
     county = county.replace("_", " ")
-    news = shuffle_news(new_news)
+    news = diversify_news(new_news)
     news = truncate_news_body(news)
     return render(req, 'news/index.html', {'category': county, 'news': news})
 
@@ -195,13 +243,13 @@ def scrape_news():
 
     # def find_tag(tag, class_, attr):
 
-    def abqjournal():
+    def abqjournal(news_source):
         """
         ########################################
         # Scrape "Albuquerque Journal" news
         ########################################
         """
-        tags = get_tags(news_source.feed_url, 'article', **{'data-section': 'news'})
+        tags = get_tags(news_source, 'article', **{'data-section': 'news'})
         if not tags:
             return
         for tag in tags:
@@ -229,7 +277,7 @@ def scrape_news():
 
             add_article(title, body, author, published, updated, url, img)
 
-    def citydesk():
+    def citydesk(news_source):
         """
 
         Getting a 403 error..... blocking the request...
@@ -238,7 +286,7 @@ def scrape_news():
         # Scrape "City Desk" news
         ########################################
         """
-        tags = get_tags(news_source.feed_url, 'article')
+        tags = get_tags(news_source, 'article')
         if not tags:
             return
         for tag in tags:
@@ -273,13 +321,13 @@ def scrape_news():
 
         return
 
-    def thepaper():
+    def thepaper(news_source):
         """
         ########################################
         # Scrape "The Paper" news
         ########################################
         """
-        tags = get_tags(news_source.feed_url, 'article', 'post')
+        tags = get_tags(news_source, 'article', 'post')
         if not tags:
             return
         for tag in tags:
@@ -299,13 +347,13 @@ def scrape_news():
 
             add_article(title, body, author, published, updated, url, img)
 
-    def joemonahan():
+    def joemonahan(news_source):
         """
         ###############################################
         # Scrape "New Mexico Politics with Joe Monahan
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'div', class_name="blogPost")
+        tags = get_tags(news_source, 'div', class_name="blogPost")
         if not tags:
             return
         for tag in tags:
@@ -332,13 +380,13 @@ def scrape_news():
 
             add_article(title, body, author, published, updated, news_source.feed_url, img)
 
-    def newmexican():
+    def newmexican(news_source):
         """
         ###############################################
         # Scrape "Santa Fe New Mexican"
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-asset-type-article')
+        tags = get_tags(news_source, 'article', class_name='tnt-asset-type-article')
         if not tags:
             return
         for tag in tags:
@@ -367,13 +415,13 @@ def scrape_news():
 
         return
 
-    def riograndesun():
+    def riograndesun(news_source):
         """
         ###############################################
         # Scrape "Rio Grande Sun"
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'article', 'tnt-asset-type-article')
+        tags = get_tags(news_source, 'article', 'tnt-asset-type-article')
         if not tags:
             return
         for tag in tags:
@@ -402,7 +450,7 @@ def scrape_news():
             add_article(title, body, author, published, updated, url, img)
         return
 
-    def lascrucessun():
+    def lascrucessun(news_source):
         """
 
         Another candidate for selenium....
@@ -411,7 +459,7 @@ def scrape_news():
         # Scrape "Las Cruces Sun"
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'a', 'p1-container')
+        tags = get_tags(news_source, 'a', 'p1-container')
         if not tags:
             return
 
@@ -443,7 +491,7 @@ def scrape_news():
             add_article(title, body, author, published, updated, url, img)
         return
 
-    def hobbssun():
+    def hobbssun(news_source):
         """
         ###############################################
         # Scrape "Hobbs Sun"
@@ -456,7 +504,7 @@ def scrape_news():
             if page > 1:
                 page_url = news_source.feed_url + '/page/' + str(page) + '/'
 
-            tags = get_tags(news_source.feed_url, 'article')
+            tags = get_tags(news_source, 'article')
             if not tags:
                 return
             for tag in tags:
@@ -482,13 +530,13 @@ def scrape_news():
 
         return
 
-    def taosnews():
+    def taosnews(news_source):
         """
         ###############################################
         # Scrape "Taos News"
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-asset-type-article')
+        tags = get_tags(news_source, 'article', class_name='tnt-asset-type-article')
         if not tags:
             return
         for tag in tags:
@@ -521,7 +569,7 @@ def scrape_news():
 
         return
 
-    def gallupsun():
+    def gallupsun(news_source):
         """
         ###############################################
         # Scrape "Gallup Sun News"
@@ -577,7 +625,7 @@ def scrape_news():
 
         return
 
-    def artesia_news():
+    def artesia_news(news_source):
         """
         ###############################################
         # Scrape "Artesian News"
@@ -587,7 +635,7 @@ def scrape_news():
         def has_author(tag):
             return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
 
-        tags = get_tags(news_source.feed_url, 'div', class_name="td-cpt-post")
+        tags = get_tags(news_source, 'div', class_name="td-cpt-post")
         if not tags:
             return
         for tag in tags:
@@ -621,7 +669,7 @@ def scrape_news():
             add_article(title, body, author, published, updated, url, img)
         return
 
-    def newmexicosun():
+    def newmexicosun(news_source):
         """
         ###############################################
         # Scrape "New Mexico Sun"
@@ -633,7 +681,7 @@ def scrape_news():
         def has_author(tag):
             return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
 
-        tags = get_tags(news_source.feed_url, 'div', class_name="news")
+        tags = get_tags(news_source, 'div', class_name="news")
         if not tags:
             return
         for tag in tags:
@@ -663,7 +711,7 @@ def scrape_news():
 
         return
 
-    def pinonpost():
+    def pinonpost(news_source):
         """
         ###############################################
         # Scrape "Pinon Post"
@@ -673,7 +721,7 @@ def scrape_news():
         def has_author(tag):
             return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
 
-        tags = get_tags(news_source.feed_url, "article", class_name='jeg_post')
+        tags = get_tags(news_source, "article", class_name='jeg_post')
         if not tags:
             return
         for t, tag in enumerate(tags):
@@ -711,13 +759,13 @@ def scrape_news():
                 break
         return
 
-    def lasvegasoptic():
+    def lasvegasoptic(news_source):
         """
         ###############################################
         # Scrape "Las Vegas Optic
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-section-news')
+        tags = get_tags(news_source, 'article', class_name='tnt-section-news')
         if not tags:
             return
         for tag in tags:
@@ -748,13 +796,13 @@ def scrape_news():
 
         return
 
-    def roswelldaily():
+    def roswelldaily(news_source):
         """
         ###############################################
         # Scrape "Roswell Daily Record
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-section-news')
+        tags = get_tags(news_source, 'article', class_name='tnt-section-news')
         if not tags:
             return
         for tag in tags:
@@ -777,7 +825,7 @@ def scrape_news():
 
         return
 
-    def farmingtondaily():
+    def farmingtondaily(news_source):
         """
         ###############################################
         # Scrape "Farmington Daily Times"
@@ -807,7 +855,7 @@ def scrape_news():
 
         return
 
-    def eastern_nm_news():
+    def eastern_nm_news(news_source):
         """
 
         Another candidate for selenium....
@@ -821,8 +869,8 @@ def scrape_news():
             return tag.name == 'a' and tag.has_attr('href') and tag.has_attr('aria-label') and tag.attrs[
                 'aria-label'] == title
 
-        tags = get_tags(news_source.feed_url, 'div', class_name='hmfunction_sectioncontainer')
-        tags = get_tags(news_source.feed_url, 'div')
+        tags = get_tags(news_source, 'div', class_name='hmfunction_sectioncontainer')
+        tags = get_tags(news_source, 'div')
         if not tags:
             return
         for tag in tags:
@@ -863,7 +911,7 @@ def scrape_news():
 
         return
 
-    def defensor_chieftain():
+    def defensor_chieftain(news_source):
         """
         ###############################################
         # Scrape "El Defensor Cheiftain" (socorro)
@@ -895,7 +943,7 @@ def scrape_news():
 
         return
 
-    def la_daily_post():
+    def la_daily_post(news_source):
         """
         ###############################################
         # Scrape "Los Alamos Daily Post"
@@ -926,7 +974,7 @@ def scrape_news():
 
         return
 
-    def sc_daily_press():
+    def sc_daily_press(news_source):
         """
         ###############################################
         # Scrape "Silver City Daily Press"
@@ -977,7 +1025,7 @@ def scrape_news():
         return
 
 
-    def nm_political_report():
+    def nm_political_report(news_source):
         """
         ###############################################
         # Scrape "New Mexico Political Report"
@@ -1045,7 +1093,7 @@ def scrape_news():
 
         return
 
-    def alamagordo_daily():
+    def alamagordo_daily(news_source):
         """
 
         Problems with site, in the middle of rewrite, site errors out.... not 403
@@ -1092,7 +1140,7 @@ def scrape_news():
 
         return
 
-    def ruidoso_news():
+    def ruidoso_news(news_source):
         """
         ###############################################
         # Scrape "Ruidoso Daily News"
@@ -1157,7 +1205,7 @@ def scrape_news():
 
         return
 
-    def abq_raw():
+    def abq_raw(news_source):
         """
         ###############################################
         # Scrape "Abq Raw"
@@ -1185,7 +1233,7 @@ def scrape_news():
 
         return
 
-    def valencia_county():
+    def valencia_county(news_source):
         """
         ###############################################
         # Scrape "Valencia County News"
@@ -1230,7 +1278,7 @@ def scrape_news():
 
         return
 
-    def the_independent():
+    def the_independent(news_source):
         """
         ###############################################
         # Scrape "Edgewood News"
@@ -1281,7 +1329,7 @@ def scrape_news():
                 add_article(title, body, author, published, updated, url, img)
         return
 
-    def cebola_citizen():
+    def cebola_citizen(news_source):
         """
         ###############################################
         # Scrape "Cebola Citizen (Grants)"
@@ -1315,7 +1363,7 @@ def scrape_news():
 
         return
 
-    def roosevelt_review():
+    def roosevelt_review(news_source):
         """
         ###############################################
         # Scrape "Roosevelt Review (Portales)"
@@ -1343,7 +1391,7 @@ def scrape_news():
 
         return
 
-    def current_argus():
+    def current_argus(news_source):
         """
         ###############################################
         # Scrape "Carlsbad Current Argus"
@@ -1392,7 +1440,7 @@ def scrape_news():
                 add_article(title, body, author, published, updated, url, img)
         return
 
-    def deming_headlight():
+    def deming_headlight(news_source):
         """
         ###############################################
         # Scrape "Deming Headlight"
@@ -1421,7 +1469,7 @@ def scrape_news():
 
         return
 
-    def rio_rancho_observer():
+    def rio_rancho_observer(news_source):
         """
         ###############################################
         # Scrape "Rio Rancho Observer"
@@ -1452,7 +1500,7 @@ def scrape_news():
 
         return
 
-    def source_nm():
+    def source_nm(news_source):
         """
          ###############################################
          # Scrape "Source NM News"
@@ -1489,7 +1537,7 @@ def scrape_news():
 
         return
 
-    def koat():
+    def koat(news_source):
         """
           ###############################################
           # Scrape "KOAT Action News"
@@ -1533,7 +1581,7 @@ def scrape_news():
 
         return
 
-    def krqe():
+    def krqe(news_source):
         """
           ###############################################
           # Scrape "KRQE Local Reporting you can Trust"
@@ -1569,7 +1617,7 @@ def scrape_news():
             add_article(title, body, author, published, updated, url, img)
         return
 
-    def kob():
+    def kob(news_source):
         """
           ###############################################
           # Scrape "KOB 4"
@@ -1627,7 +1675,7 @@ def scrape_news():
 
         return
 
-    def searchlightnm():
+    def searchlightnm(news_source):
         """
           ###############################################
           # Scrape "Searchlight NM"
@@ -1665,7 +1713,7 @@ def scrape_news():
 
         return
 
-    def corrales_comment():
+    def corrales_comment(news_source):
         """
           ###############################################
           # Scrape "Corrales Comment"
@@ -1700,18 +1748,68 @@ def scrape_news():
     news articles and output to json file. This function runs using http://burquebro.com/news/update or by cron 
     job that runs every hour.
     """
+    SCRAPERS = {
+        "abqjournal": abqjournal,
+        "citydesk": citydesk,
+        "thepaper": thepaper,
+        "joemonahan": joemonahan,
+        "newmexican": newmexican,
+        "riograndesun": riograndesun,
+        "lascrucessun": lascrucessun,
+        "hobbssun": hobbssun,
+        "taosnews": taosnews,
+        "gallupsun": gallupsun,
+        "artesia_news": artesia_news,
+        "newmexicosun": newmexicosun,
+        "pinonpost": pinonpost,
+        "lasvegasoptic": lasvegasoptic,
+        "roswelldaily": roswelldaily,
+        "farmingtondaily": farmingtondaily,
+        "eastern_nm_news": eastern_nm_news,
+        "defensor_chieftain": defensor_chieftain,
+        "la_daily_post": la_daily_post,
+        "sc_daily_press": sc_daily_press,
+        "nm_political_report": nm_political_report,
+        "alamagordo_daily": alamagordo_daily,
+        "ruidoso_news": ruidoso_news,
+        "abq_raw": abq_raw,
+        "valencia_county": valencia_county,
+        "the_independent": the_independent,
+        "cebola_citizen": cebola_citizen,
+        "roosevelt_review": roosevelt_review,
+        "current_argus": current_argus,
+        "deming_headlight": deming_headlight,
+        "rio_rancho_observer": rio_rancho_observer,
+        "source_nm": source_nm,
+        "koat": koat,
+        "krqe": krqe,
+        "kob": kob,
+        "searchlightnm": searchlightnm,
+        "corrales_comment": corrales_comment,
+    }
+
     news = []
-    news_list = News.objects.filter(published=True)
-    for news_source in news_list:
-        function = news_source.function
+
+    for news_source in News.objects.filter(published=True):
+
+        scraper = SCRAPERS.get(news_source.function)
+
+        if scraper is None:
+            write_error_log(
+                f"No scraper registered for '{news_source.function}' "
+                f"({news_source.title})"
+            )
+            continue
+
         if settings.DEBUG:
-            eval(function + "()")
+            scraper(news_source)
         else:
             try:
-                eval(function + "()")
+                scraper(news_source)
             except Exception as e:
-                write_error_log(f"Error occurred processing: {news_source.function} Error: {e} ")
-
+                write_error_log(
+                    f"Error processing {news_source.title}: {e}"
+                )
 
     # Remove duplicate entries
     news = remove_duplicates(news)
