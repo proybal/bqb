@@ -15,7 +15,8 @@ ACTUAL_DIR = os.path.dirname(__file__)
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-development-key-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
+# DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
+DEBUG = True
 MAX_ARTICLES = 10
 ALLOWED_HOSTS = [
     "127.0.0.1",

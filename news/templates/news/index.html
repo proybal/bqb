@@ -39,6 +39,14 @@
             -webkit-border-radius: 10px;
         }
 
+        .news-image {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            max-height: none;
+            max-width: none;
+        }
+
 
         @media (max-width: 600px) {
             .cards {
@@ -86,39 +94,42 @@
             caret-color: transparent;
         }
 
-        img {
-            max-height: 400px;
-            max-width: 350px;
+        .news-title img {
+            max-width: 70px;
+            max-height: 70px;
+            object-fit: cover;
+        }
+
         }
     </style>
 {% endblock style %}
 
 {% block script %}
     <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "NewsMediaOrganization",
-  "name": "New Mexico News",
-  "url": "https://burquebro.com",
-  "description": "Stay updated with the latest news from New Mexico. Burque Bro brings you top headlines, breaking stories, and in-depth coverage from across the state.",
-  "foundingDate": "2024-01-01",
-  "location": {
-    "@type": "Place",
-    "name": "New Mexico, USA",
-    "address": {
-      "@type": "PostalAddress",
-      "addressRegion": "NM",
-      "addressCountry": "USA"
-    }
-  },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "Customer Support",
-    "email": "proybal@yahoo.com",
-    "telephone": "+1-505-401-9111"
-  }
-}
-</script>
+        {
+          "@context": "https://schema.org",
+          "@type": "NewsMediaOrganization",
+          "name": "New Mexico News",
+          "url": "https://burquebro.com",
+          "description": "Stay updated with the latest news from New Mexico. Burque Bro brings you top headlines, breaking stories, and in-depth coverage from across the state.",
+          "foundingDate": "2024-01-01",
+          "location": {
+            "@type": "Place",
+            "name": "New Mexico, USA",
+            "address": {
+              "@type": "PostalAddress",
+              "addressRegion": "NM",
+              "addressCountry": "USA"
+            }
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Customer Support",
+            "email": "proybal@yahoo.com",
+            "telephone": "+1-505-401-9111"
+          }
+        }
+    </script>
 
     <script>
         $(document).ready(function () {
@@ -168,7 +179,8 @@
 {% block head %}
     <title>Best Source for New Mexico News | {{ category }} News</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <meta name="description" content="Stay updated with the latest news from New Mexico. Our news aggregator brings you top headlines, breaking stories, and in-depth coverage from across the state.">
+    <meta name="description"
+          content="Stay updated with the latest news from New Mexico. Our news aggregator brings you top headlines, breaking stories, and in-depth coverage from across the state.">
 
 
 {% endblock head %}
@@ -178,7 +190,7 @@
 {% endblock title %}
 
 {% block body %}
-        {% if messages %}
+    {% if messages %}
         <div class="alert alert-primary d-flex align-items-center p-1" role="alert">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
                  class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img"
@@ -193,12 +205,12 @@
             </div>
         </div>
     {% endif %}
-    <div class="container-fluid">
+    <div class="container-fluid px-4 px-lg-5">
         <div><h5 style="color: lightgray">{{ news|length }} Articles in {{ category }} News</h5></div>
         <div class="row">
             {% for n in news %}
                 <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient">
-                    <div class="news-item bg-body h-100 mx-auto p-3 rounded-5">
+                    <div class="news-item bg-body h-100 mx-auto p-3 rounded-5 d-flex flex-column">
                         <div class="news-title clearfix content-heading">
                             <span>
                                 <a href="{{ n.source_url }}">
@@ -215,15 +227,13 @@
                                 <p class="p-0 m-0" style="font-size: x-small">by: {{ n.author }}</p>
                             {% endif %}
                         </div>
-                        <div class="news-published mb-4 mt-1"></div>
+                        <hr class="my-2">
                         {% if n.img %}
                             <a href="{{ n.url }}" style="font-style: italic; font-size: large">
-                                <img class="mx-auto d-block rounded-5"
+                                <img class="news-image mx-auto d-block rounded-4"
                                      src="{{ n.img }}"
-                                     width='75%'
-                                     height="40%"
                                      loading="lazy"
-                                     alt="{{ source.title }}">
+                                     alt="{{ n.title }}">
                                 <div class="news-title">{{ n.title }}</div>
                             </a>
                         {% else %}
@@ -232,14 +242,19 @@
                             </a>
                         {% endif %}
                         <!-- Add a truncatable area for the body text -->
-                        <div class="news-body">
+                        <div class="news-body flex-grow-1">
                             <p>{{ n.body }}</p>
                         </div>
 
-                        <div class="news-published">
-                            <p class="m-1" style="font-size: x-small;">Published: {{ n.published }}</p>
+                        <div class="news-published mt-auto pt-2">
+                            <p class="m-1" style="font-size: x-small;">
+                                Published: {{ n.published }}
+                            </p>
+
                             {% if n.updated and n.updated != n.published %}
-                                <p style="font-size: x-small">Updated: {{ n.updated }}</p>
+                                <p class="m-1" style="font-size: x-small;">
+                                    Updated: {{ n.updated }}
+                                </p>
                             {% endif %}
                         </div>
                     </div>
@@ -250,8 +265,8 @@
     <div class="go-to-top" id="goToTopButton">&uarr;</div>
     <h5 style="color: lightgray; font-size: small" href="mailto: proybal@yahoo.com">created by Paul Roybal</h5>
 
-{#        <!-- Bootstrap Bundle with Popper -->#}
-{#    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>#}
+    {#        <!-- Bootstrap Bundle with Popper -->#}
+    {#    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>#}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))

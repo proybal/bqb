@@ -101,13 +101,26 @@
                 {% if request.user.is_authenticated %}
                     {% if request.user.is_superuser %}
                         <!-- Update -->
-                        <li class="nav-item mx-2">
-                            <a class="nav-link text-white bg-transparent px-2 mt-2" data-bs-toggle="tooltip"
-                               data-bs-custom-class="custom-tooltip" data-bs-delay="1" data-bs-placement="bottom"
-                               data-bs-title="Update News" href="{% url "news-update" %}">
-                                <span class="glyphicon glyphicon-refresh align-bottom"
-                                      style="color: white; font-size: 18px;"></span>
-                            </a>
+                        <li class="nav-item mx-2 d-flex align-items-center">
+                            <form method="post"
+                                  action="{% url 'news-update' %}"
+                                  class="d-flex align-items-center m-0">
+                                {% csrf_token %}
+
+                                <button type="submit"
+                                        class="nav-link text-white bg-transparent border-0 px-2 py-0 m-0 d-flex align-items-center"
+                                        style="cursor: pointer; line-height: 1;"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-custom-class="custom-tooltip"
+                                        data-bs-delay="1"
+                                        data-bs-placement="bottom"
+                                        data-bs-title="Update News"
+                                        aria-label="Update News">
+
+                                    <span class="glyphicon glyphicon-refresh"
+                                          style="color: white; font-size: 18px;"></span>
+                                </button>
+                            </form>
                         </li>
                         <!-- Admin -->
                         <li class="nav-item mx-2">
@@ -172,8 +185,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                 <!-- Signup -->
-                                   <div class="modal-footer d-flex justify-content-center bg-blue">
+                                    <!-- Signup -->
+                                    <div class="modal-footer d-flex justify-content-center bg-blue">
                                         <div class="signup-section">Not a member yet? <a href="{% url 'signup' %}"
                                                                                          class="text-info">
                                             Sign Up</a>.

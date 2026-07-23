@@ -8,6 +8,7 @@ from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 import time, random
+from django.views.decorators.http import require_POST
 
 try:
     from selenium import webdriver
@@ -1766,16 +1767,31 @@ def scrape_news():
     return news
 
 
+
+
+@require_POST
 @user_passes_test(lambda user: user.is_superuser)
 def news_update(req):
     active_job = ScrapeJob.objects.filter(
-        status__in=(ScrapeJob.STATUS_QUEUED, ScrapeJob.STATUS_RUNNING)
+        status__in=(
+            ScrapeJob.STATUS_QUEUED,
+            ScrapeJob.STATUS_RUNNING,
+        )
     ).first()
 
     if active_job:
-        messages.info(req, f"News update job {active_job.pk} is already {active_job.status}.")
+        messages.info(
+            req,
+            f"News update job {active_job.pk} is already {active_job.status}.",
+        )
     else:
-        job = ScrapeJob.objects.create(requested_by=req.user, source="web")
-        messages.success(req, f"News update job {job.pk} was queued.")
+        job = ScrapeJob.objects.create(
+            requested_by=req.user,
+            source="web",
+        )
+        messages.success(
+            req,
+            f"News update job {job.pk} was queued.",
+        )
 
     return redirect("state_news")
