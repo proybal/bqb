@@ -1,0 +1,28 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div class="module">
+    <table>
+        <caption>
+            <a href="{% url 'admin:article-counts' %}">
+                Reports
+            </a>
+        </caption>
+
+        <tr>
+            <th scope="row">
+                <a href="{% url 'admin:article-counts' %}">
+                    Article Counts by News Source
+                </a>
+            </th>
+            <td>
+                <a href="{% url 'admin:article-counts' %}" class="viewlink">
+                    View
+                </a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{{ block.super }}
+{% endblock %}
