@@ -2,12 +2,12 @@
 
 from django.contrib import admin
 from django.urls import include, path
-
 import news.views
 from accounts.views import signup_view, loginPage, activate
 from django.conf import settings 
 from django.urls import path, include 
 from django.conf.urls.static import static 
+from news.admin import article_counts_view
 
 urlpatterns = [
     path('', news.views.index, name="news"),
@@ -16,6 +16,11 @@ urlpatterns = [
     path('', include('slideshow.urls')),
     path('login/', loginPage, name='login'),
     # path('home/', include('pages.urls'), name="home"),
+    path(
+        "admin/article-counts/",
+        admin.site.admin_view(article_counts_view),
+        name="article-counts",
+    ),
     path('admin/', admin.site.urls),
     path('signup/', signup_view, name="signup"),
     path('activate/<slug:uidb64>/<slug:token>/', activate, name='activate'),

@@ -249,7 +249,7 @@ def scrape_news():
         # Scrape "Albuquerque Journal" news
         ########################################
         """
-        tags = get_tags(news_source, 'article', **{'data-section': 'news'})
+        tags = get_tags(news_source.feed_url, 'article')
         if not tags:
             return
         for tag in tags:
@@ -286,7 +286,7 @@ def scrape_news():
         # Scrape "City Desk" news
         ########################################
         """
-        tags = get_tags(news_source, 'article')
+        tags = get_tags(news_source.feed_url, 'article')
         if not tags:
             return
         for tag in tags:
@@ -327,7 +327,7 @@ def scrape_news():
         # Scrape "The Paper" news
         ########################################
         """
-        tags = get_tags(news_source, 'article', 'post')
+        tags = get_tags(news_source.feed_url, 'article', 'post')
         if not tags:
             return
         for tag in tags:
@@ -353,7 +353,7 @@ def scrape_news():
         # Scrape "New Mexico Politics with Joe Monahan
         ###############################################
         """
-        tags = get_tags(news_source, 'div', class_name="blogPost")
+        tags = get_tags(news_source.feed_url, 'div', class_name="blogPost")
         if not tags:
             return
         for tag in tags:
@@ -386,7 +386,7 @@ def scrape_news():
         # Scrape "Santa Fe New Mexican"
         ###############################################
         """
-        tags = get_tags(news_source, 'article', class_name='tnt-asset-type-article')
+        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-asset-type-article')
         if not tags:
             return
         for tag in tags:
@@ -421,7 +421,7 @@ def scrape_news():
         # Scrape "Rio Grande Sun"
         ###############################################
         """
-        tags = get_tags(news_source, 'article', 'tnt-asset-type-article')
+        tags = get_tags(news_source.feed_url, 'article', 'tnt-asset-type-article')
         if not tags:
             return
         for tag in tags:
@@ -459,7 +459,7 @@ def scrape_news():
         # Scrape "Las Cruces Sun"
         ###############################################
         """
-        tags = get_tags(news_source, 'a', 'p1-container')
+        tags = get_tags(news_source.feed_url, 'a', 'p1-container')
         if not tags:
             return
 
@@ -536,7 +536,7 @@ def scrape_news():
         # Scrape "Taos News"
         ###############################################
         """
-        tags = get_tags(news_source, 'article', class_name='tnt-asset-type-article')
+        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-asset-type-article')
         if not tags:
             return
         for tag in tags:
@@ -635,7 +635,7 @@ def scrape_news():
         def has_author(tag):
             return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
 
-        tags = get_tags(news_source, 'div', class_name="td-cpt-post")
+        tags = get_tags(news_source.feed_url, 'div', class_name="td-cpt-post")
         if not tags:
             return
         for tag in tags:
@@ -721,7 +721,7 @@ def scrape_news():
         def has_author(tag):
             return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
 
-        tags = get_tags(news_source, "article", class_name='jeg_post')
+        tags = get_tags(news_source.feed_url, "article", class_name='jeg_post')
         if not tags:
             return
         for t, tag in enumerate(tags):
@@ -765,7 +765,7 @@ def scrape_news():
         # Scrape "Las Vegas Optic
         ###############################################
         """
-        tags = get_tags(news_source, 'article', class_name='tnt-section-news')
+        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-section-news')
         if not tags:
             return
         for tag in tags:
@@ -802,7 +802,7 @@ def scrape_news():
         # Scrape "Roswell Daily Record
         ###############################################
         """
-        tags = get_tags(news_source, 'article', class_name='tnt-section-news')
+        tags = get_tags(news_source.feed_url, 'article', class_name='tnt-section-news')
         if not tags:
             return
         for tag in tags:
@@ -869,7 +869,7 @@ def scrape_news():
             return tag.name == 'a' and tag.has_attr('href') and tag.has_attr('aria-label') and tag.attrs[
                 'aria-label'] == title
 
-        tags = get_tags(news_source, 'div', class_name='hmfunction_sectioncontainer')
+        #tags = get_tags(news_source, 'div', class_name='hmfunction_sectioncontainer')
         tags = get_tags(news_source, 'div')
         if not tags:
             return
@@ -1811,7 +1811,7 @@ def scrape_news():
         article_count_before = len(news)
 
         try:
-            scraper()
+            scraper(news_source)
         except Exception as e:
             write_error_log(
                 f"Error processing source='{news_source.title}', "

@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<h1>Article Counts by News Source</h1>
+
+{% if error_message %}
+    <p class="errornote">{{ error_message }}</p>
+{% else %}
+
+    <div style="margin-bottom: 20px;">
+        <strong>Total articles:</strong> {{ total_articles }}
+        &nbsp;&nbsp;
+        <strong>Total sources:</strong> {{ total_sources }}
+    </div>
+
+    <table id="result_list">
+        <thead>
+            <tr>
+                <th>News Source</th>
+                <th>Article Count</th>
+                <th>Percentage</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for row in rows %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td>{{ row.source }}</td>
+                    <td>{{ row.count }}</td>
+                    <td>{{ row.percentage }}%</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No articles found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endif %}
+
+{% endblock %}
