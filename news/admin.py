@@ -149,3 +149,20 @@ class ScrapeJobAdmin(admin.ModelAdmin):
 
         return f"{seconds}s"
 
+# Add Article Counts custom page to Django Admin URLs
+_original_get_urls = admin.site.get_urls
+
+
+def get_admin_urls():
+    custom_urls = [
+        path(
+            "article-counts/",
+            admin.site.admin_view(article_counts_view),
+            name="article-counts",
+        ),
+    ]
+
+    return custom_urls + _original_get_urls()
+
+
+admin.site.get_urls = get_admin_urls
