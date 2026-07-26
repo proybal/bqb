@@ -2,8 +2,7 @@
 {% load tz %}
 {% load static %}
 {% load custom_tags %}
-<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+
 
 {% block style %}
     <style>
@@ -100,7 +99,7 @@
             object-fit: cover;
         }
 
-        }
+
     </style>
 {% endblock style %}
 
@@ -186,10 +185,13 @@
 {% endblock head %}
 
 {% block title %}
-    {% include 'news/navbar.html' %}
+    Best Source for New Mexico News | {{ category }} News
 {% endblock title %}
 
 {% block body %}
+
+    {% include 'news/navbar.html' %}
+
     {% if messages %}
         <div class="alert alert-primary d-flex align-items-center p-1" role="alert">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"

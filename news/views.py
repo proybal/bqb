@@ -1,4 +1,4 @@
-# views.py
+# news/views.py
 import json
 from .models import News, ScrapeJob
 import datetime
@@ -11,7 +11,33 @@ import time, random
 from django.views.decorators.http import require_POST
 from collections import defaultdict
 
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 
+from .functions import *
+
+def manifest(request):
+    content = render_to_string("news/manifest.json")
+
+    return HttpResponse(
+        content,
+        content_type="application/manifest+json",
+    )
+
+def service_worker(request):
+    content = render_to_string("news/service_worker.js")
+
+    response = HttpResponse(
+        content,
+        content_type="application/javascript"
+    )
+
+    response["Service-Worker-Allowed"] = "/"
+    return response
+
+
+def offline(request):
+    return render(request, "news/offline.html")
 
 try:
     from selenium import webdriver
@@ -20,7 +46,6 @@ try:
 except Exception:
     SELENIUM_AVAILABLE = False
 
-from .functions import *
 
 
 def diversify_news(news, top_limit=20, max_per_source=2):

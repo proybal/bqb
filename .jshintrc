@@ -1,0 +1,6 @@
+{
+  "esversion": 11,
+  "worker": true,
+  "browser": true,
+  "-W097": false
+}

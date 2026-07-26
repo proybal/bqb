@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from urllib.parse import urljoin
 import csv
-
+import ipaddress
 import requests
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
@@ -32,24 +32,61 @@ def write_error_log(message):
 
 
 def write_access_log(req, category):
-    """
-        ##  write out access log for visits to home page
-        ##  getting the hostname by socket.gethostname() method
-        # hostname = socket.gethostname()
-        ## getting the IP address using socket.gethostbyname() method
-        # ip_address = socket.gethostbyname(hostname)
-    """
-
     def get_location(ip_address):
-        # ip_address = '98.60.223.30'
-        response = requests.get(f'https://ipapi.co/{ip_address}/json/').json()
-        location_data = {
-            "ip": ip_address,
-            "city": response.get("city"),
-            "region": response.get("region"),
-            "country": response.get("country_name")
+        default_location = {
+            "city": "",
+            "region": "",
+            "country_name": "",
+            "latitude": None,
+            "longitude": None,
         }
-        return location_data
+
+        if not ip_address:
+            return default_location
+
+        try:
+            ip = ipaddress.ip_address(ip_address)
+
+            if (
+                ip.is_private
+                or ip.is_loopback
+                or ip.is_reserved
+                or ip.is_link_local
+            ):
+                return default_location
+
+        except ValueError:
+            return default_location
+
+        try:
+            response = requests.get(
+                f"https://ipapi.co/{ip_address}/json/",
+                timeout=5,
+                headers={
+                    "User-Agent": "BurqueBro/1.0"
+                },
+            )
+
+            response.raise_for_status()
+
+            if "application/json" not in response.headers.get(
+                "Content-Type",
+                ""
+            ):
+                return default_location
+
+            data = response.json()
+
+            if data.get("error"):
+                return default_location
+
+            return data
+
+        except (
+            requests.RequestException,
+            ValueError,
+        ):
+            return default_location
 
     def get_client_ip(req):
         x_forwarded_for = req.META.get("HTTP_X_FORWARDED_FOR")
@@ -63,22 +100,37 @@ def write_access_log(req, category):
 
         return ip, host
 
-    FILE_NAME = 'access_log'
-    with open(FILE_NAME, 'a', newline='') as file:
-        csv_writer = csv.writer(file)  # Use csv.writer() explicitly
+    file_name = "access_log"
+
+    with open(file_name, "a", newline="", encoding="utf-8") as file:
+        csv_writer = csv.writer(file)
+
         ip, hostname = get_client_ip(req)
         location_data = get_location(ip)
-        from_zone = tz.gettz('UTC')
-        to_zone = tz.gettz('America/Denver')
+
+        from_zone = tz.gettz("UTC")
+        to_zone = tz.gettz("America/Denver")
+
         utc = datetime.utcnow()
         utc = utc.replace(tzinfo=from_zone)
         denver = utc.astimezone(to_zone)
+
         date_out = denver.strftime("%m-%d-%Y")
         time_out = denver.strftime("%H:%M:%S")
-        list_data = [date_out, time_out, ip, category, location_data['city'], location_data['country']]
+
+        city = location_data.get("city", "")
+        country = location_data.get("country_name", "")
+
+        list_data = [
+            date_out,
+            time_out,
+            ip,
+            category,
+            city,
+            country,
+        ]
+
         csv_writer.writerow(list_data)
-
-
 
 
 def parse_relative_time(relative_time_str):
