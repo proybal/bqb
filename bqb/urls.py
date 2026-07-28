@@ -10,7 +10,6 @@ from accounts.views import activate, loginPage, signup_view
 from news import views
 from news.admin import article_counts_view
 
-
 urlpatterns = [
     path("admin/article-counts/",
          admin.site.admin_view(article_counts_view),
@@ -21,7 +20,11 @@ urlpatterns = [
     path("manifest.json", views.manifest, name="manifest"),
     path("service_worker.js", views.service_worker, name="service_worker"),
     path("offline/", views.offline, name="offline"),
-
+    path(
+        "offline-news/",
+        views.offline_news,
+        name="offline-news",
+    ),
     path(
         "",
         RedirectView.as_view(

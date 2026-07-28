@@ -15,7 +15,24 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 
 from .functions import *
+from django.shortcuts import render
 
+from .models import News
+
+def offline_news(request):
+    articles = (
+        News.objects
+        .all()
+        .order_by("-published")[:150]
+    )
+
+    return render(
+        request,
+        "news/offline_news.html",
+        {
+            "articles": articles,
+        },
+    )
 def manifest(request):
     content = render_to_string("news/manifest.json")
 

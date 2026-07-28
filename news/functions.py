@@ -1,4 +1,4 @@
-# functions.py
+# news/functions.py
 import re
 from datetime import datetime
 from urllib.parse import urljoin

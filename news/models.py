@@ -1,3 +1,31 @@
+# news/models.py
+
+from django.conf import settings
+from django.db import models
+
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="push_subscriptions",
+    )
+
+    endpoint = models.URLField(unique=True)
+
+    p256dh = models.TextField()
+    auth = models.TextField()
+
+    user_agent = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.endpoint[:50]}"
+
+
 from django.db import models
 
 REGION_CHOICES = (
@@ -131,7 +159,6 @@ class News(models.Model):
 
     class Meta:
         db_table = 'news'
-        # Add verbose name
         verbose_name = 'New'  # dumb i know but otherwise it displays 'Newss'
 
 class ScrapeJob(models.Model):
@@ -164,3 +191,41 @@ class ScrapeJob(models.Model):
     def __str__(self):
         return f"Scrape job {self.pk}: {self.status}"
 
+# news/views.py
+
+import json
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+from .models import PushSubscription
+
+
+@login_required
+@require_POST
+def save_push_subscription(request):
+    try:
+        payload = json.loads(request.body)
+
+        endpoint = payload["endpoint"]
+        keys = payload["keys"]
+
+        PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                "user": request.user,
+                "p256dh": keys["p256dh"],
+                "auth": keys["auth"],
+                "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+                "is_active": True,
+            },
+        )
+
+        return JsonResponse({"success": True})
+
+    except (KeyError, TypeError, json.JSONDecodeError):
+        return JsonResponse(
+            {"success": False, "error": "Invalid subscription data"},
+            status=400,
+        )
