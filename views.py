@@ -2327,22 +2327,7 @@ def scrape_news():
                 article['updated'] = date_time_obj.strftime("%A %B %d %Y")
             else:
                 article['updated'] = date_time_obj.strftime("%A %B %d %Y %H:%M%p")
-    """
-    Compare old and new dictionaries and send notification of additions.
-    with open(settings.BQB_URL + "news.json", "r") as old_file:
-        old_news = json.load(old_file)
-    breaking_news = []
-    for key in news:
-        match = False
-        for key2 in old_news:
-            if key['url'] == key2['url']:
-                match = True
-                break
-        if not match:
-            breaking_news.append(key)
-    with open(settings.BQB_URL + "breaking_news.json", "w") as outfile:
-        json.dump(breaking_news, outfile, indent=4)
-    """
+
     with open(settings.BQB_URL + "news.json", "w") as outfile:
         json.dump(news, outfile, indent=4)
     return news

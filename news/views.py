@@ -13,11 +13,104 @@ from collections import defaultdict
 
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 
 from .functions import *
 from django.shortcuts import render
 
 from .models import News
+
+from django.views.decorators.http import require_POST
+
+from .models import PushSubscription
+from .push import send_push_to_all
+
+
+@require_POST
+@user_passes_test(lambda user: user.is_superuser)
+def news_update(req):
+    active_job = ScrapeJob.objects.filter(
+        status__in=(
+            ScrapeJob.STATUS_QUEUED,
+            ScrapeJob.STATUS_RUNNING,
+        )
+    ).first()
+
+    if active_job:
+        messages.info(
+            req,
+            f"News update job {active_job.pk} is already {active_job.status}.",
+        )
+    else:
+        job = ScrapeJob.objects.create(
+            requested_by=req.user,
+            source="web",
+        )
+        messages.success(
+            req,
+            f"News update job {job.pk} was queued.",
+        )
+
+    return (redirect("state_news"))
+
+
+@login_required
+def push_public_key(request):
+    return JsonResponse({
+        "publicKey": settings.VAPID_PUBLIC_KEY_BROWSER,
+    })
+
+
+@login_required
+@require_POST
+def save_push_subscription(request):
+    try:
+        payload = json.loads(request.body)
+
+        endpoint = payload["endpoint"]
+        keys = payload["keys"]
+
+        PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                "user": request.user,
+                "p256dh": keys["p256dh"],
+                "auth": keys["auth"],
+                "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+                "is_active": True,
+            },
+        )
+
+        return JsonResponse({"success": True})
+
+    except (KeyError, TypeError, json.JSONDecodeError):
+        return JsonResponse(
+            {"success": False, "error": "Invalid subscription data"},
+            status=400,
+        )
+
+
+@login_required
+@require_POST
+def delete_push_subscription(request):
+    try:
+        payload = json.loads(request.body)
+        endpoint = payload["endpoint"]
+
+        PushSubscription.objects.filter(
+            user=request.user,
+            endpoint=endpoint,
+        ).delete()
+
+        return JsonResponse({"success": True})
+
+    except (KeyError, TypeError, json.JSONDecodeError):
+        return JsonResponse(
+            {"success": False, "error": "Invalid subscription data"},
+            status=400,
+        )
+
 
 def offline_news(request):
     articles = (
@@ -33,6 +126,8 @@ def offline_news(request):
             "articles": articles,
         },
     )
+
+
 def manifest(request):
     content = render_to_string("news/manifest.json")
 
@@ -40,6 +135,7 @@ def manifest(request):
         content,
         content_type="application/manifest+json",
     )
+
 
 def service_worker(request):
     content = render_to_string("news/service_worker.js")
@@ -56,13 +152,14 @@ def service_worker(request):
 def offline(request):
     return render(request, "news/offline.html")
 
+
 try:
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
+
     SELENIUM_AVAILABLE = True
 except Exception:
     SELENIUM_AVAILABLE = False
-
 
 
 def diversify_news(news, top_limit=20, max_per_source=2):
@@ -115,6 +212,7 @@ def diversify_news(news, top_limit=20, max_per_source=2):
     selected.extend(remaining)
 
     return selected
+
 
 def remove_duplicates(news):
     seen = set()
@@ -214,6 +312,7 @@ def by_region(req, region):
             "news": news,
         },
     )
+
 
 def by_city(req, city):
     write_access_log(req, city)
@@ -820,8 +919,6 @@ def scrape_news():
 
             img = get_img(tag.find(class_="image")) if tag.find(class_="image") else ""
 
-
-
             news_soup = get_soup(url)
             if not news_soup:
                 continue
@@ -830,7 +927,6 @@ def scrape_news():
             #     body = get_body_text(news_soup)
             body = get_body_text(news_soup)
             author = get_value(news_soup, 'span', 'tnt-user-name')
-
 
             published = get_date(news_soup, 'time', 'tnt-date', 'datetime')
             updated = ""
@@ -848,8 +944,7 @@ def scrape_news():
         if not tags:
             return
         for tag in tags:
-
-            title = get_value(tag, 'a',attr='aria-label')
+            title = get_value(tag, 'a', attr='aria-label')
 
             url = news_source.source + get_value(tag, 'a', attr='href')
 
@@ -876,7 +971,6 @@ def scrape_news():
         tags = get_tags(news_source.feed_url, 'div', class_name="frontpage-headlines-title")
 
         for tag in tags:
-
             title = cleanup(tag.text)
 
             url = get_value(tag, 'a', attr='href')
@@ -911,7 +1005,7 @@ def scrape_news():
             return tag.name == 'a' and tag.has_attr('href') and tag.has_attr('aria-label') and tag.attrs[
                 'aria-label'] == title
 
-        #tags = get_tags(news_source, 'div', class_name='hmfunction_sectioncontainer')
+        # tags = get_tags(news_source, 'div', class_name='hmfunction_sectioncontainer')
         tags = get_tags(news_source, 'div')
         if not tags:
             return
@@ -1066,7 +1160,6 @@ def scrape_news():
 
         return
 
-
     def nm_political_report(news_source):
         """
         ###############################################
@@ -1150,7 +1243,6 @@ def scrape_news():
         return
         ####################################
 
-
         tags = get_tags(news_source.feed_url, 'a', class_name='gnt_m_flm_a')
         tags = get_tags(news_source.feed_url, 'article')
         if not tags:
@@ -1175,7 +1267,6 @@ def scrape_news():
             if not news_soup:
                 continue
 
-
             author = ""
 
             add_article(title, body, author, published, updated, url, img)
@@ -1198,13 +1289,11 @@ def scrape_news():
 
         def has_author(tag):
             return tag.name == 'meta' and tag.has_attr('content') and tag.has_attr('property') \
-                   and tag.attrs['property'] == 'article:author'
+                and tag.attrs['property'] == 'article:author'
 
         ####################################
         return
         ####################################
-
-
 
         tags = get_tags(news_source.feed_url, 'a', class_name='gnt_m_flm_a')
         if not tags:
@@ -1268,7 +1357,7 @@ def scrape_news():
             img = get_value(news_soup, 'img', 'wp-post-image', 'src', False)
             body = get_meta(news_soup, {'property': 'og:description'})
             published = get_date(news_soup, 'meta', property='article:published_time')
-            updated = get_date(news_soup, 'meta', property= 'article:modified_time')
+            updated = get_date(news_soup, 'meta', property='article:modified_time')
             author = get_meta(news_soup, {'name': 'author'})
 
             add_article(title, body, author, published, updated, url, img)
@@ -1334,7 +1423,6 @@ def scrape_news():
         """
 
         return
-
 
         news_soup = get_soup(news_source.feed_url)
         if not news_soup:
@@ -1492,7 +1580,6 @@ def scrape_news():
         if not tags:
             return
         for tag in tags:
-
             title = get_value(tag, 'div', 'title')
 
             url = get_value(tag, attr='ta_permalink')
@@ -1602,7 +1689,7 @@ def scrape_news():
                 # Use the pattern to find the URL in the string
                 img = pattern.search(img)
                 img = img.group(1)
-#            img = get_img(tag, class_name='image')
+            #            img = get_img(tag, class_name='image')
             author = get_value(tag, 'div', 'author-name')
 
             news_soup = get_soup(url)
@@ -1880,10 +1967,6 @@ def scrape_news():
     Clean up data in news dictionary prior to committing to json file.
     """
     for article in news:
-        # max_len = 256
-        # if len(article['body']) > max_len:
-        #     article['body'] = adjust_string_length(article['body'], max_len)
-
         base_name, extension = os.path.splitext(article['img'])
         match = re.match(r'^(.*-)(\d+)x\d+$', base_name)
         if match:
@@ -1895,24 +1978,7 @@ def scrape_news():
         article['city'] = article['city'].replace(" ", "_")
         article['county'] = article['county'].replace(" ", "_")
 
-    """
-    Compare old and new dictionaries and send notification of additions.
-    with open(settings.BQB_URL + "news.json", "r") as old_file:
-        old_news = json.load(old_file)
-    breaking_news = []
-    for key in news:
-        match = False
-        for key2 in old_news:
-            if key['url'] == key2['url']:
-                match = True
-                break
-        if not match:
-            breaking_news.append(key)
-    with open(settings.BQB_URL + "breaking_news.json", "w") as outfile:
-        json.dump(breaking_news, outfile, indent=4)
-    """
-
-    # Format datetime objects as strings in the desired format
+     # Format datetime objects as strings in the desired format
     for item in news:
         original_date_string = item['published']
         original_date = datetime.strptime(original_date_string, "%Y-%m-%dT%H:%M:%S")
@@ -1924,39 +1990,143 @@ def scrape_news():
             new_date_string = original_date.strftime("%A, %B %d, %Y %I:%M%p")
             item['updated'] = new_date_string
 
-    # Output news.json if dictionary entries exist
+    news_json_path = os.path.join(
+        settings.BQB_URL,
+        "news.json",
+    )
 
-    if len(news) > 0:
-        with open(settings.BQB_URL + "news.json", "w") as outfile:
-            json.dump(news, outfile, indent=4)
-    return news
+    breaking_news_path = os.path.join(
+        settings.BQB_URL,
+        "breaking_news.json",
+    )
 
+    notified_urls = set()
 
+    breaking_news_file_exists = os.path.exists(
+        breaking_news_path
+    )
 
+    if breaking_news_file_exists:
+        try:
+            with open(
+                    breaking_news_path,
+                    "r",
+                    encoding="utf-8",
+            ) as infile:
+                saved_urls = json.load(infile)
 
-@require_POST
-@user_passes_test(lambda user: user.is_superuser)
-def news_update(req):
-    active_job = ScrapeJob.objects.filter(
-        status__in=(
-            ScrapeJob.STATUS_QUEUED,
-            ScrapeJob.STATUS_RUNNING,
-        )
-    ).first()
+            if isinstance(saved_urls, list):
+                notified_urls = {
+                    url
+                    for url in saved_urls
+                    if isinstance(url, str) and url
+                }
+            else:
+                print(
+                    "breaking_news.json did not contain "
+                    "a list. Rebuilding its baseline."
+                )
+                breaking_news_file_exists = False
 
-    if active_job:
-        messages.info(
-            req,
-            f"News update job {active_job.pk} is already {active_job.status}.",
-        )
+        except (
+                json.JSONDecodeError,
+                OSError,
+                TypeError,
+        ) as error:
+            print(
+                "Could not read breaking_news.json: "
+                f"{error}"
+            )
+
+            breaking_news_file_exists = False
+            notified_urls = set()
+
+    current_urls = {
+        article.get("url")
+        for article in news
+        if article.get("url")
+    }
+
+    if breaking_news_file_exists:
+        breaking_news = [
+            article
+            for article in news
+            if article.get("url")
+               and article["url"] not in notified_urls
+        ]
     else:
-        job = ScrapeJob.objects.create(
-            requested_by=req.user,
-            source="web",
-        )
-        messages.success(
-            req,
-            f"News update job {job.pk} was queued.",
+        # The first run establishes a baseline.
+        # It must not notify about every current article.
+        breaking_news = []
+
+        print(
+            "Created breaking-news baseline; "
+            "no push notification sent."
         )
 
-    return redirect("state_news")
+    if news:
+        with open(
+                news_json_path,
+                "w",
+                encoding="utf-8",
+        ) as outfile:
+            json.dump(
+                news,
+                outfile,
+                indent=4,
+            )
+
+        if breaking_news:
+            article_count = len(breaking_news)
+
+            if article_count == 1:
+                article = breaking_news[0]
+
+                title = "Breaking News"
+
+                body = article.get(
+                    "title",
+                    "A new story is available.",
+                )
+
+                notification_url = article.get(
+                    "url",
+                    "/news/",
+                )
+
+            else:
+                title = "BurqueBro Breaking News"
+
+                body = (
+                    f"{article_count} new stories "
+                    "are now available."
+                )
+
+                notification_url = "/news/"
+
+            sent, failed = send_push_to_all(
+                title=title,
+                body=body,
+                url=notification_url,
+            )
+
+            print(
+                f"Breaking-news push complete: "
+                f"{sent} sent, {failed} failed."
+            )
+
+        # Remember all URLs in the current feed.
+        notified_urls.update(current_urls)
+
+        with open(
+                breaking_news_path,
+                "w",
+                encoding="utf-8",
+        ) as outfile:
+            json.dump(
+                sorted(notified_urls),
+                outfile,
+                indent=4,
+            )
+
+    return news

@@ -2,17 +2,28 @@
 settings.py : Django settings for bqb news project. pr
 
 """
-
+from dotenv import load_dotenv
+load_dotenv()
 from pathlib import Path
 import os
+
+SECRETS_DIR = os.getenv("SECRETS_DIR")
+
+VAPID_PUBLIC_KEY_BROWSER = os.getenv("VAPID_PUBLIC_KEY_BROWSER")
+VAPID_ADMIN_EMAIL = os.getenv("VAPID_ADMIN_EMAIL")
+
+VAPID_PRIVATE_KEY = os.path.join(SECRETS_DIR, "private_key.pem")
+VAPID_PUBLIC_KEY = os.path.join(SECRETS_DIR, "public_key.pem")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 ACTUAL_DIR = os.path.dirname(__file__)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-development-key-change-me')
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "unsafe-development-key-change-me"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
@@ -74,20 +85,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bqb.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -134,6 +137,3 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_PORT = 587
 
 BQB_URL = ""
-
-
-# CELERY_BROKER_URL = 'redis://localhost:6379'

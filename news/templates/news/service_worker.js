@@ -1,9 +1,9 @@
 /* jshint esversion: 11, worker: true */
 /* jshint -W097 */
-/* global caches, Promise */
+/* global caches, clients, Promise */
 
-const STATIC_CACHE = "burquebro-static-v3";
-const CONTENT_CACHE = "burquebro-content-v3";
+const STATIC_CACHE = "burquebro-static-v5";
+const CONTENT_CACHE = "burquebro-content-v6";
 
 const OFFLINE_URL = "/offline/";
 const OFFLINE_NEWS_URL = "/offline-news/";
@@ -20,18 +20,15 @@ const STATIC_FILES = [
 
 
 /*
- * Download a current compact headline list and save it.
+ * Download the latest compact offline-news page and cache it.
  *
- * A failed refresh does not remove the previously cached copy.
+ * If the request fails, the previous cached copy remains available.
  */
 function refreshOfflineNews() {
-    return fetch(
-        OFFLINE_NEWS_URL,
-        {
-            cache: "no-store",
-            credentials: "same-origin"
-        }
-    ).then(response => {
+    return fetch(OFFLINE_NEWS_URL, {
+        cache: "no-store",
+        credentials: "same-origin"
+    }).then(response => {
         if (!response.ok) {
             throw new Error(
                 "Offline news request failed: " + response.status
@@ -48,6 +45,12 @@ function refreshOfflineNews() {
 }
 
 
+/*
+ * Install
+ *
+ * Cache core PWA files and attempt to cache the latest compact
+ * offline-news page.
+ */
 self.addEventListener("install", event => {
     event.waitUntil(
         caches
@@ -66,6 +69,12 @@ self.addEventListener("install", event => {
 });
 
 
+/*
+ * Activate
+ *
+ * Remove older BurqueBro caches and immediately take control
+ * of open pages.
+ */
 self.addEventListener("activate", event => {
     const currentCaches = [
         STATIC_CACHE,
@@ -92,6 +101,21 @@ self.addEventListener("activate", event => {
 });
 
 
+/*
+ * Fetch
+ *
+ * Navigation requests:
+ * - Try the network first.
+ * - Refresh the compact offline-news page in the background.
+ * - If offline, show the cached compact news page.
+ * - If unavailable, show the basic offline page.
+ *
+ * Local static assets:
+ * - Use the cache first.
+ * - Fall back to the network.
+ *
+ * External article images are not cached.
+ */
 self.addEventListener("fetch", event => {
     const request = event.request;
 
@@ -99,10 +123,6 @@ self.addEventListener("fetch", event => {
         return;
     }
 
-    /*
-     * Every online page visit refreshes the compact headline list
-     * in the background.
-     */
     if (request.mode === "navigate") {
         event.waitUntil(
             refreshOfflineNews().catch(error => {
@@ -130,10 +150,6 @@ self.addEventListener("fetch", event => {
         return;
     }
 
-    /*
-     * Serve local static assets from the cache when available.
-     * External article images are not cached.
-     */
     const requestUrl = new URL(request.url);
 
     if (
@@ -146,4 +162,89 @@ self.addEventListener("fetch", event => {
             })
         );
     }
+});
+
+
+/*
+ * Push notifications
+ */
+self.addEventListener("push", event => {
+    const notificationData = {
+        title: "BurqueBro",
+        body: "You have a new notification.",
+        url: "/news/",
+        icon: "/static/news/pwa/icon-192.png",
+        badge: "/static/news/pwa/icon-192.png"
+    };
+
+    if (event.data) {
+        try {
+            const incomingData = event.data.json();
+
+            Object.assign(
+                notificationData,
+                incomingData
+            );
+        } catch (error) {
+            notificationData.body = event.data.text();
+        }
+    }
+
+    event.waitUntil(
+        self.registration.showNotification(
+            notificationData.title,
+            {
+                body: notificationData.body,
+                icon: notificationData.icon,
+                badge: notificationData.badge,
+                data: {
+                    url: notificationData.url
+                }
+            }
+        )
+    );
+});
+
+
+/*
+ * Notification clicks
+ *
+ * Focus an existing BurqueBro window when possible.
+ * Otherwise, open a new window.
+ */
+self.addEventListener("notificationclick", event => {
+    event.notification.close();
+
+    let targetUrl = "/news/";
+
+    if (
+        event.notification.data &&
+        event.notification.data.url
+    ) {
+        targetUrl = event.notification.data.url;
+    }
+
+    event.waitUntil(
+        clients
+            .matchAll({
+                type: "window",
+                includeUncontrolled: true
+            })
+            .then(clientList => {
+                for (const client of clientList) {
+                    if (
+                        client.url === targetUrl &&
+                        "focus" in client
+                    ) {
+                        return client.focus();
+                    }
+                }
+
+                if (clients.openWindow) {
+                    return clients.openWindow(targetUrl);
+                }
+
+                return null;
+            })
+    );
 });
