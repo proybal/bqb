@@ -1,23 +1,43 @@
-- name: Deploy to VPS
-  uses: appleboy/ssh-action@v1.2.0
-  with:
-    host: ${{ secrets.VPS_HOST }}
-    username: ${{ secrets.VPS_USERNAME }}
-    key: ${{ secrets.VPS_SSH_KEY }}
-    port: 22
-    script: |
-      set -e
+name: Deploy BQB
 
-      cd "$HOME/public_html/bqb"
+on:
+  push:
+    branches:
+      - main
 
-      git fetch origin
-      git reset --hard origin/main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-      source .venv/bin/activate
+    steps:
+      - name: Verify deployment secrets
+        shell: bash
+        run: |
+          test -n "${{ secrets.VPS_HOST }}" || { echo "VPS_HOST missing"; exit 1; }
+          test -n "${{ secrets.VPS_USERNAME }}" || { echo "VPS_USERNAME missing"; exit 1; }
+          test -n "${{ secrets.VPS_SSH_KEY }}" || { echo "VPS_SSH_KEY missing"; exit 1; }
+          echo "All deployment secrets are available in GitHub secrets."
 
-      python -m pip install -r requirements.txt
-      python manage.py check
-      python manage.py migrate --noinput
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
 
-      mkdir -p static/images staticfiles
-      python manage.py collectstatic --noinput
+            cd "$HOME/public_html/bqb"
+
+            git fetch origin
+            git reset --hard origin/main
+
+            source .venv/bin/activate
+
+            python -m pip install -r requirements.txt
+            python manage.py check
+            python manage.py migrate --noinput
+
+            mkdir -p static/images staticfiles
+            python manage.py collectstatic --noinput
