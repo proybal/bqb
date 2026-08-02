@@ -3,7 +3,7 @@
 
 (function () {
     const pushToggle = document.getElementById("pushToggle");
-
+    const pushIcon = document.getElementById("pushIcon");
     if (!pushToggle) {
         return;
     }
@@ -94,14 +94,38 @@
     function setButtonState(subscription) {
         pushToggle.style.display = "inline-block";
 
+        if (!pushIcon) {
+            return;
+        }
+
         if (subscription) {
             pushToggle.title = "Disable Notifications";
-            pushToggle.setAttribute("aria-label", "Disable Notifications");
+            pushToggle.setAttribute(
+                "aria-label",
+                "Disable Notifications"
+            );
             pushToggle.dataset.enabled = "true";
+
+            pushIcon.classList.remove(
+                "glyphicon-bell-slash"
+            );
+            pushIcon.classList.add(
+                "glyphicon-bell"
+            );
         } else {
             pushToggle.title = "Enable Notifications";
-            pushToggle.setAttribute("aria-label", "Enable Notifications");
+            pushToggle.setAttribute(
+                "aria-label",
+                "Enable Notifications"
+            );
             pushToggle.dataset.enabled = "false";
+
+            pushIcon.classList.remove(
+                "glyphicon-bell"
+            );
+            pushIcon.classList.add(
+                "glyphicon-bell-slash"
+            );
         }
     }
 

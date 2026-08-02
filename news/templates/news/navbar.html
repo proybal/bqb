@@ -122,122 +122,122 @@
                     </form>
                 </li>
                 {% if request.user.is_authenticated %}
-                {% if request.user.is_superuser %}
-                <!-- Update -->
-                <li class="nav-item mx-2 d-flex align-items-center">
-                    <form method="post"
-                          action="{% url 'news-update' %}"
-                          class="d-flex align-items-center m-0">
-                        {% csrf_token %}
+                    {% if request.user.is_superuser %}
+                        <!-- Update -->
+                        <li class="nav-item mx-2 d-flex align-items-center">
+                            <form method="post"
+                                  action="{% url 'news-update' %}"
+                                  class="d-flex align-items-center m-0">
+                                {% csrf_token %}
 
-                        <button type="submit"
-                                class="nav-link text-white bg-transparent border-0 px-2 py-0 m-0 d-flex align-items-center"
-                                style="cursor: pointer; line-height: 1;"
-                                data-bs-toggle="tooltip"
-                                data-bs-custom-class="custom-tooltip"
-                                data-bs-delay="1"
-                                data-bs-placement="bottom"
-                                data-bs-title="Update News"
-                                aria-label="Update News">
+                                <button type="submit"
+                                        class="nav-link text-white bg-transparent border-0 px-2 py-0 m-0 d-flex align-items-center"
+                                        style="cursor: pointer; line-height: 1;"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-custom-class="custom-tooltip"
+                                        data-bs-delay="1"
+                                        data-bs-placement="bottom"
+                                        data-bs-title="Update News"
+                                        aria-label="Update News">
 
                                     <span class="glyphicon glyphicon-refresh"
                                           style="color: white; font-size: 18px;"></span>
-                        </button>
-                    </form>
-                </li>
-                <!-- Admin -->
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin">
+                                </button>
+                            </form>
+                        </li>
+                        <!-- Admin -->
+                        <li class="nav-item mx-2">
+                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin">
                                 <span class="glyphicon glyphicon-cog align-bottom"
                                       style="color: white; font-size: 18px"></span>
-                    </a>
-                </li>
-                {% endif %}
+                            </a>
+                        </li>
+                    {% endif %}
 
-                <!-- Push Notifications -->
-                <li class="nav-item mx-2 d-flex align-items-center">
-                    <button
-                            id="pushToggle"
-                            type="button"
-                            class="nav-link bg-transparent border-0 px-2 py-0 m-0"
-                            style="display:block; color:white;"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="bottom"
-                            title="Enable Notifications">
+                    <!-- Push Notifications -->
+                    <li class="nav-item mx-2 d-flex align-items-center">
+                        <button
+                                id="pushToggle"
+                                type="button"
+                                class="nav-link bg-transparent border-0 px-2 py-0 m-0"
+                                style="display:block; color:white;"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="bottom"
+                                title="Enable Notifications">
 
-                        <span class="glyphicon glyphicon-bell"></span>
+                            <i id="pushIcon"
+                               class="fa-solid fa-bell-slash"></i>
+                        </button>
+                    </li>
 
-                    </button>
-                </li>
-
-                <!-- Logout -->
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-white bg-transparent px-2 mt-2" href="/logout">
+                    <!-- Logout -->
+                    <li class="nav-item mx-2">
+                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="/logout">
                             <span class="glyphicon glyphicon-log-out align-bottom"
                                   style="color: white; font-size: 18px"></span>
-                    </a>
-                </li>
+                        </a>
+                    </li>
                 {% else %}
-                <!-- Signup -->
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-white bg-transparent px-2 mt-2" href="/signup">
+                    <!-- Signup -->
+                    <li class="nav-item mx-2">
+                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="/signup">
                             <span class="glyphicon glyphicon-user align-bottom"
                                   style="color: white; font-size: 18px"></span>
-                    </a>
-                </li>
-                <!-- Login -->
-                <li class="nav-item">
-                    <a class="nav-link text-white bg-transparent px-2 mt-2" href="#" data-toggle="modal"
-                       data-target="#loginModal">
+                        </a>
+                    </li>
+                    <!-- Login -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="#" data-toggle="modal"
+                           data-target="#loginModal">
                             <span class="glyphicon glyphicon-log-in align-bottom"
                                   style="color: white; font-size: 18px"></span>
-                    </a>
+                        </a>
 
-                    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
-                         aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header bg-blue">
-                                    <h5>Login</h5>
-                                </div>
-                                <div class="modal-title">
-                                    <div class="form-title text-center bg-primary">
-                                        {# <h4>Login</h4>#}
+                        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-blue">
+                                        <h5>Login</h5>
                                     </div>
-                                    <div class="modal-body">
-                                        <div class="d-flex flex-column text-center">
-                                            <form method="POST" action="{% url 'login' %}">
-                                                {% csrf_token %}
-                                                <div class="form-group">
-                                                    <input type="text" class="form-control" name="username"
-                                                           id="username"
-                                                           placeholder="Your user name...">
-                                                </div>
-                                                <div class="form-group">
-                                                    <input type="password" class="form-control" name="password"
-                                                           id="password"
-                                                           placeholder="Your password...">
-                                                </div>
-                                                <button type="submit"
-                                                        class="btn btn-info btn-block btn-round">
-                                                    Login
-                                                </button>
-                                            </form>
+                                    <div class="modal-title">
+                                        <div class="form-title text-center bg-primary">
+                                            {# <h4>Login</h4>#}
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="d-flex flex-column text-center">
+                                                <form method="POST" action="{% url 'login' %}">
+                                                    {% csrf_token %}
+                                                    <div class="form-group">
+                                                        <input type="text" class="form-control" name="username"
+                                                               id="username"
+                                                               placeholder="Your user name...">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <input type="password" class="form-control" name="password"
+                                                               id="password"
+                                                               placeholder="Your password...">
+                                                    </div>
+                                                    <button type="submit"
+                                                            class="btn btn-info btn-block btn-round">
+                                                        Login
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <!-- Signup -->
-                                <div class="modal-footer d-flex justify-content-center bg-blue">
-                                    <div class="signup-section">Not a member yet? <a href="{% url 'signup' %}"
-                                                                                     class="text-info">
-                                        Sign Up</a>.
+                                    <!-- Signup -->
+                                    <div class="modal-footer d-flex justify-content-center bg-blue">
+                                        <div class="signup-section">Not a member yet? <a href="{% url 'signup' %}"
+                                                                                         class="text-info">
+                                            Sign Up</a>.
+                                        </div>
                                     </div>
-                                </div>
 
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </li>
+                    </li>
                 {% endif %}
             </ul>
         </div>
