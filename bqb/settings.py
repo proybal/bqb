@@ -137,3 +137,6 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_PORT = 587
 
 BQB_URL = ""
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/news/"
+LOGOUT_REDIRECT_URL = "/news/"

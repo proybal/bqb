@@ -1,7 +1,6 @@
 # news/urls.py
 from django.contrib import admin
 from accounts.views import signup_view, loginPage, activate
-
 from django.urls import path
 from news import views, scripts
 
