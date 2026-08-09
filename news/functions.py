@@ -421,54 +421,61 @@ def get_img(
 
 def get_tags(url, tag, class_name=None, id_name=None, **kwargs):
     """
-    Fetch all tags of a given type (with optional class, id, or other attributes) from a URL.
-    Returns a list of BeautifulSoup tag objects or None on failure.
-
-    Example:
-        get_tags(url, 'article', **{'data-section': 'news'})
-        get_tags(url, 'div', class_name='container', **{'data-id': '123'})
+    Fetch all tags of a given type, optionally filtered by class,
+    id, or other attributes.
     """
     try:
         headers = {
             'User-Agent': (
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                 'AppleWebKit/537.36 (KHTML, like Gecko) '
-                'Chrome/92.0.4515.131 Safari/537.36'
+                'Chrome/142.0 Safari/537.36'
             )
         }
-        response = requests.get(url, headers=headers)
+
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=20
+        )
+
         response.raise_for_status()
+
     except Exception as e:
         write_error_log(e)
         return None
 
-    soup = BeautifulSoup(response.text, 'html5lib')
+    soup = BeautifulSoup(
+        response.text,
+        'html.parser'
+    )
 
-    # --- filter logic ---------------------------------------------------------
-    # Build attrs dictionary for additional attributes
     attrs = {}
 
     if class_name:
         attrs['class'] = class_name
+
     if id_name:
         attrs['id'] = id_name
 
-    # Merge any additional keyword arguments (like data-section)
     attrs.update(kwargs)
 
-    # Use attrs if we have any filters, otherwise just find by tag
     if attrs:
-        tags = soup.find_all(tag, attrs=attrs)
+        tags = soup.find_all(
+            tag,
+            attrs=attrs
+        )
     else:
         tags = soup.find_all(tag)
-    # -------------------------------------------------------------------------
 
     if not tags:
-        write_error_log(f"No results found for tag '{tag}' on {url} response: {response.status_code}")
+        write_error_log(
+            f"No results found for tag '{tag}' "
+            f"on {url} response: {response.status_code}"
+        )
         return None
 
     return tags
-
 def get_soup(url):
     headers = {
         "User-Agent": (

@@ -22,7 +22,5 @@ class Profile(models.Model):
         return self.user.username
 
 @receiver(post_save, sender=User)
-def update_profile_signal(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-    instance.profile.save()
+def create_user_profile(sender, instance, **kwargs):
+    Profile.objects.get_or_create(user=instance)

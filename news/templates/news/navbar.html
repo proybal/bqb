@@ -147,7 +147,7 @@
                         </li>
                         <!-- Admin -->
                         <li class="nav-item mx-2">
-                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin">
+                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin" title="Site Administration" aria-label="Site Administration">
                                 <span class="glyphicon glyphicon-cog align-bottom"
                                       style="color: white; font-size: 18px"></span>
                             </a>
@@ -187,56 +187,10 @@
                     </li>
                     <!-- Login -->
                     <li class="nav-item">
-                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="#" data-toggle="modal"
-                           data-target="#loginModal">
-                            <span class="glyphicon glyphicon-log-in align-bottom"
-                                  style="color: white; font-size: 18px"></span>
+                        <a class="nav-link text-white bg-transparent px-2 mt-2"
+                           href="{% url 'login' %}">
+                            <span class="glyphicon glyphicon-log-in align-bottom" style="color: white; font-size: 20px"></span>
                         </a>
-
-                        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
-                             aria-labelledby="exampleModalLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-blue">
-                                        <h5>Login</h5>
-                                    </div>
-                                    <div class="modal-title">
-                                        <div class="form-title text-center bg-primary">
-                                            {# <h4>Login</h4>#}
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="d-flex flex-column text-center">
-                                                <form method="POST" action="{% url 'login' %}">
-                                                    {% csrf_token %}
-                                                    <div class="form-group">
-                                                        <input type="text" class="form-control" name="username"
-                                                               id="username"
-                                                               placeholder="Your user name...">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <input type="password" class="form-control" name="password"
-                                                               id="password"
-                                                               placeholder="Your password...">
-                                                    </div>
-                                                    <button type="submit"
-                                                            class="btn btn-info btn-block btn-round">
-                                                        Login
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Signup -->
-                                    <div class="modal-footer d-flex justify-content-center bg-blue">
-                                        <div class="signup-section">Not a member yet? <a href="{% url 'signup' %}"
-                                                                                         class="text-info">
-                                            Sign Up</a>.
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
                     </li>
                 {% endif %}
             </ul>

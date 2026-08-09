@@ -1,0 +1,375 @@
+{% extends "news/base.html" %}
+{% load static %}
+
+{% block title %}
+    Create Account | BurqueBro
+{% endblock title %}
+
+{% block style %}
+    <style>
+        .register-page {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+            border: 0;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.24);
+        }
+
+        .register-card .card-body {
+            padding: 2rem;
+        }
+
+        .register-title {
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .register-subtitle {
+            color: #6c757d;
+            margin-bottom: 1.75rem;
+        }
+
+        .register-card .form-label {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .register-card .form-control {
+            min-height: 46px;
+            border-radius: 9px;
+        }
+
+        .register-card .form-control:focus {
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+        }
+
+        .field-error {
+            margin-top: 0.35rem;
+            color: #b02a37;
+            font-size: 0.875rem;
+        }
+
+        .password-help {
+            color: #6c757d;
+            font-size: 0.82rem;
+            margin-top: 0.45rem;
+        }
+
+        .register-submit {
+            min-height: 46px;
+            font-weight: 600;
+            border-radius: 9px;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper .form-control {
+            padding-right: 46px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #6c757d;
+            z-index: 5;
+        }
+
+        @media (max-width: 576px) {
+            .register-page {
+                padding: 1rem;
+            }
+
+            .register-card .card-body {
+                padding: 1.4rem;
+            }
+        }
+    </style>
+{% endblock style %}
+
+{% block body %}
+    <div class="register-page">
+        <div class="card register-card">
+            <div class="card-body">
+
+                <div class="text-center">
+                    <h1 class="register-title h2">
+                        Create Your Account
+                    </h1>
+
+                    <p class="register-subtitle">
+                        Sign up for BurqueBro breaking-news alerts.
+                    </p>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label"
+                               for="{{ form.username.id_for_label }}">
+                            Username
+                        </label>
+
+                        {{ form.username }}
+
+                        {% for error in form.username.errors %}
+                            <div class="field-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"
+                               for="{{ form.name.id_for_label }}">
+                            Full name
+                        </label>
+
+                        {{ form.name }}
+
+                        {% for error in form.name.errors %}
+                            <div class="field-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"
+                               for="{{ form.address.id_for_label }}">
+                            Street address
+                        </label>
+
+                        {{ form.address }}
+
+                        {% for error in form.address.errors %}
+                            <div class="field-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"
+                                   for="{{ form.city.id_for_label }}">
+                                City
+                            </label>
+
+                            {{ form.city }}
+
+                            {% for error in form.city.errors %}
+                                <div class="field-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label"
+                                   for="{{ form.region.id_for_label }}">
+                                State
+                            </label>
+
+                            {{ form.region }}
+
+                            {% for error in form.region.errors %}
+                                <div class="field-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label"
+                                   for="{{ form.postal_code.id_for_label }}">
+                                ZIP code
+                            </label>
+
+                            {{ form.postal_code }}
+
+                            {% for error in form.postal_code.errors %}
+                                <div class="field-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"
+                               for="{{ form.email.id_for_label }}">
+                            Email address
+                        </label>
+
+                        {{ form.email }}
+
+                        {% for error in form.email.errors %}
+                            <div class="field-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"
+                               for="{{ form.phone.id_for_label }}">
+                            Phone
+                            <span class="text-muted fw-normal">
+                            (optional)
+                        </span>
+                        </label>
+
+                        {{ form.phone }}
+
+                        {% for error in form.phone.errors %}
+                            <div class="field-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"
+                               for="{{ form.password1.id_for_label }}">
+                            Password
+                        </label>
+
+                        <div class="password-wrapper">
+                            {{ form.password1 }}
+
+                            <button type="button"
+                                    class="password-toggle"
+                                    data-password-target="{{ form.password1.id_for_label }}"
+                                    aria-label="Show password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+
+                        {% for error in form.password1.errors %}
+                            <div class="field-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                        <div class="password-help">
+                            Use a strong password you do not use elsewhere.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label"
+                               for="{{ form.password2.id_for_label }}">
+                            Confirm password
+                        </label>
+
+                        <div class="password-wrapper">
+                            {{ form.password2 }}
+
+                            <button type="button"
+                                    class="password-toggle"
+                                    data-password-target="{{ form.password2.id_for_label }}"
+                                    aria-label="Show password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+
+                        {% for error in form.password2.errors %}
+                            <div class="field-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary register-submit w-100">
+                        Create Account
+                    </button>
+                </form>
+
+                <p class="text-center mt-4 mb-0">
+                    Already have an account?
+                    <a href="#"
+                       data-toggle="modal"
+                       data-target="#loginModal">
+                        Log in
+                    </a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+{% endblock body %}
+
+{% block script %}
+    <script>
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+                const toggleButtons =
+                    document.querySelectorAll(
+                        ".password-toggle"
+                    );
+
+                toggleButtons.forEach(function (button) {
+                    button.addEventListener(
+                        "click",
+                        function () {
+                            const targetId =
+                                button.dataset.passwordTarget;
+
+                            const passwordInput =
+                                document.getElementById(targetId);
+
+                            const icon =
+                                button.querySelector("i");
+
+                            if (!passwordInput) {
+                                return;
+                            }
+
+                            if (passwordInput.type === "password") {
+                                passwordInput.type = "text";
+                                icon.className =
+                                    "fa-solid fa-eye-slash";
+                                button.setAttribute(
+                                    "aria-label",
+                                    "Hide password"
+                                );
+                            } else {
+                                passwordInput.type = "password";
+                                icon.className =
+                                    "fa-solid fa-eye";
+                                button.setAttribute(
+                                    "aria-label",
+                                    "Show password"
+                                );
+                            }
+                        }
+                    );
+                });
+            }
+        );
+    </script>
+{% endblock script %}

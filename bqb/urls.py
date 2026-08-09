@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from accounts.views import activate, loginPage, signup_view
+from accounts.views import activate, loginPage, registerPage
 from news import views
 from news.admin import article_counts_view
 
@@ -48,7 +48,7 @@ urlpatterns = [
     ),
 
     path("login/", loginPage, name="login"),
-    path("signup/", signup_view, name="signup"),
+    path("signup/", registerPage, name="signup"),
     path(
         "activate/<slug:uidb64>/<slug:token>/",
         activate,

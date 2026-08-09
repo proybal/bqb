@@ -1,5 +1,8 @@
 # news/views.py
 import json
+
+import feedparser
+
 from .models import News, ScrapeJob
 import datetime
 from django.conf import settings
@@ -1085,28 +1088,141 @@ def scrape_news():
         # Scrape "Los Alamos Daily Post"
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'article', class_name='post')
+
+        tags = get_tags(
+            news_source.feed_url,
+            'article',
+            class_name='elementor-post'
+        )
+
         if not tags:
             return
+
         for tag in tags:
 
-            author = get_value(tag, 'span', 'elementor-post-author')
+            # Title and URL
+            title_tag = tag.find(
+                ['h2', 'span'],
+                class_='elementor-post__title'
+            )
 
-            title = get_text(tag, 'a')
+            if not title_tag:
+                continue
 
-            body = get_body_text(tag)
+            link_tag = title_tag.find(
+                'a',
+                href=True
+            )
 
-            url = get_value(tag, 'a', attr='href')
+            if not link_tag:
+                continue
 
-            img = get_value(tag, 'img', re.compile('^wp-image'), 'src', False)
+            title = link_tag.get_text(
+                " ",
+                strip=True
+            )
 
-            published = get_date(tag, 'span', 'elementor-post-date')
+            url = link_tag['href']
+
+            # Author
+            author_tag = tag.find(
+                'span',
+                class_='elementor-post-author'
+            )
+
+            if author_tag:
+                author = author_tag.get_text(
+                    " ",
+                    strip=True
+                )
+            else:
+                author = ""
+
+            # Body / excerpt
+            body_tag = tag.find(
+                'div',
+                class_='elementor-post__excerpt'
+            )
+
+            if body_tag:
+                body = body_tag.get_text(
+                    " ",
+                    strip=True
+                )
+            else:
+                body = ""
+
+            # Image
+            img = ""
+
+            img_tag = tag.find('img')
+
+            if img_tag:
+                img = (
+                        img_tag.get('src')
+                        or img_tag.get('data-src')
+                        or ""
+                )
+
+            # Date
+            date_tag = tag.find(
+                'span',
+                class_='elementor-post-date'
+            )
+
+            time_tag = tag.find(
+                'span',
+                class_='elementor-post-time'
+            )
+
+            published = ""
+
+            if date_tag:
+                date_text = date_tag.get_text(
+                    " ",
+                    strip=True
+                )
+
+                if time_tag:
+                    date_text += " " + time_tag.get_text(
+                        " ",
+                        strip=True
+                    )
+
+                date_text = (
+                    date_text
+                    .replace("on ", "")
+                    .replace(" - ", " ")
+                    .strip()
+                )
+
+                try:
+                    published_dt = parse(date_text)
+
+                    published = published_dt.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+
+                except Exception as e:
+                    print(
+                        f"Los Alamos Daily Post "
+                        f"date error {date_text!r}: {e}"
+                    )
+
+            if not published:
+                continue
 
             updated = ""
 
-            # added the conditional because articles are duplicated w/o img
-            if img:
-                add_article(title, body, author, published, updated, url, img)
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
 
         return
 
@@ -1164,69 +1280,111 @@ def scrape_news():
         """
         ###############################################
         # Scrape "New Mexico Political Report"
+        # WordPress REST API
         ###############################################
         """
-        url = news_source.feed_url
-        if not SELENIUM_AVAILABLE:
-            return
+
+        api_url = (
+            "https://nmpoliticalreport.com/"
+            "wp-json/wp/v2/posts?per_page=20&_embed=1"
+        )
+
         try:
-            from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
-            # from selenium import webdriver
-            # from selenium.webdriver.chrome.options import Options
+            response = requests.get(
+                api_url,
+                headers={
+                    "User-Agent": "Mozilla/5.0"
+                },
+                timeout=20,
+            )
+
+            response.raise_for_status()
+            posts = response.json()
+
         except Exception as e:
-            print("Selenium not available:", e)
-            return None
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
-            ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
-            page = ctx.new_page()
-
-            # Load and wait just enough so articles are in the DOM
-            page.set_default_timeout(10000)
-            page.set_default_navigation_timeout(15000)
-            page.goto(url, wait_until="load")
-            try:
-                page.wait_for_selector("article", timeout=5000)
-            except PWTimeout:
-                pass  # continue; some pages render immediately
-
-            html = page.content()
-            browser.close()  # Playwright is done; parse locally below
-
-        soup = BeautifulSoup(html, "html.parser")
-        print(soup.title.string if soup.title else "No title found")
-
-        # Find article blocks
-        tags = soup.find_all("article")
-        if not tags:
-            # Optional: drop a quick debug snapshot if nothing matched
-            # Path is relative to where this runs
-            with open("nmpr_dump.html", "w", encoding="utf-8") as f:
-                f.write(html)
+            print(f"NM Political Report API error: {e}")
             return
 
-        for tag in tags:
-            # Uses your helpers; keep them if they already work across sources
-            title = get_value(tag, "h2", "entry-title") or get_value(tag, "h3", "entry-title")
-            url = get_value(tag, "a", attr="href")
+        print(f"NM Political Report API returned {len(posts)} posts")
 
-            # Images on WP often sit on .wp-post-image; also try data-src
-            img = get_img(tag, "wp-post-image")
-            if not img:
-                imgel = tag.find("img")
-                if imgel:
-                    img = imgel.get("src") or imgel.get("data-src") or imgel.get("data-lazy-src")
+        for post in posts:
 
-            # Dates: pass the tag name AND the class (most themes use <time class="published">)
-            published = get_date(tag, "time", "published") or get_date(tag, "time", "entry-date")
-            updated = get_date(tag, "time", "updated")
+            # Title
+            title_html = (
+                post.get("title", {})
+                .get("rendered", "")
+            )
 
+            title = BeautifulSoup(
+                title_html,
+                "html.parser"
+            ).get_text().strip()
+
+            # URL
+            url = post.get("link", "")
+
+            # Body / excerpt
+            excerpt_html = (
+                post.get("excerpt", {})
+                .get("rendered", "")
+            )
+
+            body = BeautifulSoup(
+                excerpt_html,
+                "html.parser"
+            ).get_text().strip()
+
+            # Published date
+            published = post.get("date", "")
+
+            if published:
+                published = published[:19]
+
+            # Updated date
+            updated = post.get("modified", "")
+
+            if updated:
+                updated = updated[:19]
+
+            # Author
             author = ""
-            body = ""  # populate later if you fetch article pages
 
-            add_article(title, body, author, published, updated, url, img)
+            embedded = post.get("_embedded", {})
+
+            author_data = embedded.get("author", [])
+
+            if author_data:
+                author = author_data[0].get(
+                    "name",
+                    ""
+                )
+
+            # Featured image
+            img = ""
+
+            media_data = embedded.get(
+                "wp:featuredmedia",
+                []
+            )
+
+            if media_data:
+                img = media_data[0].get(
+                    "source_url",
+                    ""
+                )
+
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
 
         return
+
 
     def alamagordo_daily(news_source):
         """
@@ -2077,44 +2235,43 @@ def scrape_news():
             )
 
         if breaking_news:
-            article_count = len(breaking_news)
+            max_push_articles = 5
+            articles_to_notify = breaking_news[:max_push_articles]
 
-            if article_count == 1:
-                article = breaking_news[0]
+            total_sent = 0
+            total_failed = 0
 
-                title = "Breaking News"
+            for article in articles_to_notify:
+                source_name = article.get(
+                    "source",
+                    "New Mexico News",
+                )
 
-                body = article.get(
+                article_title = article.get(
                     "title",
                     "A new story is available.",
                 )
 
-                notification_url = article.get(
+                article_url = article.get(
                     "url",
                     "/news/",
                 )
 
-            else:
-                title = "BurqueBro Breaking News"
-
-                body = (
-                    f"{article_count} new stories "
-                    "are now available."
+                sent, failed = send_push_to_all(
+                    title=f"BurqueBro • {source_name}",
+                    body=article_title,
+                    url=article_url,
                 )
 
-                notification_url = "/news/"
-
-            sent, failed = send_push_to_all(
-                title=title,
-                body=body,
-                url=notification_url,
-            )
+                total_sent += sent
+                total_failed += failed
 
             print(
-                f"Breaking-news push complete: "
-                f"{sent} sent, {failed} failed."
+                "Breaking-news pushes complete: "
+                f"{len(articles_to_notify)} articles, "
+                f"{total_sent} deliveries sent, "
+                f"{total_failed} deliveries failed."
             )
-
         # Remember all URLs in the current feed.
         notified_urls.update(current_urls)
 
