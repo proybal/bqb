@@ -1,32 +1,24 @@
 # news/views.py
 import json
+import os
+import datetime
 
 import feedparser
-
-from .models import News, ScrapeJob
-import datetime
 from django.conf import settings
-import os
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
-import time, random
-from django.views.decorators.http import require_POST
 from collections import defaultdict
-
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-
 from .functions import *
 from django.shortcuts import render
-
-from .models import News
-
 from django.views.decorators.http import require_POST
 
 from .models import PushSubscription
+from .models import News, ScrapeJob
 from .push import send_push_to_all
 
 
@@ -154,15 +146,6 @@ def service_worker(request):
 
 def offline(request):
     return render(request, "news/offline.html")
-
-
-try:
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
-
-    SELENIUM_AVAILABLE = True
-except Exception:
-    SELENIUM_AVAILABLE = False
 
 
 def diversify_news(news, top_limit=20, max_per_source=2):
@@ -596,9 +579,6 @@ def scrape_news():
 
     def lascrucessun(news_source):
         """
-
-        Another candidate for selenium....
-
         ###############################################
         # Scrape "Las Cruces Sun"
         ###############################################
@@ -996,9 +976,6 @@ def scrape_news():
 
     def eastern_nm_news(news_source):
         """
-
-        Another candidate for selenium....
-
         ###############################################
         # Scrape "Eastern New Mexico News" (clovis)
         ###############################################
@@ -1573,15 +1550,9 @@ def scrape_news():
         # Scrape "Edgewood News"
         ###############################################
 
-
-        Changed site to: https://www.edgewood-nm.gov/
-
-        Site not working, candidate for selenium
-
         """
 
         return
-
         news_soup = get_soup(news_source.feed_url)
         if not news_soup:
             return
@@ -1826,82 +1797,410 @@ def scrape_news():
 
     def koat(news_source):
         """
-          ###############################################
-          # Scrape "KOAT Action News"
-          ###############################################
-          """
+        ###############################################
+        # Scrape "KOAT Action News"
+        ###############################################
+        """
 
-        tags = get_tags(news_source.feed_url, 'div', class_name="article")
-        if not tags:
+        try:
+            response = requests.get(
+                news_source.feed_url,
+                timeout=20,
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/142.0 Safari/537.36"
+                    )
+                },
+            )
+
+            response.raise_for_status()
+
+        except requests.RequestException as e:
+            print(f"KOAT request failed: {e}")
             return
-        for tag in tags:
-            title = get_value(tag, 'a', attr='aria-label')
 
-            url = news_source.source + get_value(tag, 'a', attr='href')
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
 
-            img_tag = tag.find('div', class_='image')
-            if img_tag and img_tag.has_attr('data-style'):
-                img = img_tag.attrs['data-style']
-                # Define a regular expression pattern to extract the URL
-                pattern = re.compile(r'background-image:url\((https://[^?]+)')
-                # Use the pattern to find the URL in the string
-                img = pattern.search(img)
-                img = img.group(1)
-            #            img = get_img(tag, class_name='image')
-            author = get_value(tag, 'div', 'author-name')
+        # KOAT story links now use /article/...
+        story_links = []
 
-            news_soup = get_soup(url)
-            if not news_soup:
+        for link in soup.find_all("a", href=True):
+            href = link.get("href", "")
+            title = link.get_text(" ", strip=True)
+
+            if not href.startswith("/article/"):
                 continue
 
-            body = get_value(news_soup, 'div', 'article-content--body-text')
+            if not title:
+                continue
 
-            dt_tag = news_soup.find('div', class_='article-headline--publish-date')
-            if dt_tag.text.find('Updated') != -1:
-                published = parse(dt_tag.text[dt_tag.text.find('Updated:') + 9:])
-            else:
-                published = parse(dt_tag.text)
-            published = published.strftime("%Y-%m-%dT%H:%M:%S")
+            # Avoid duplicate links to the same article
+            url = "https://www.koat.com" + href
+
+            if any(item["url"] == url for item in story_links):
+                continue
+
+            story_links.append({
+                "title": title,
+                "url": url,
+            })
+
+        print(f"KOAT found {len(story_links)} unique story links")
+
+        # Keep this reasonable -- homepage can contain old/promotional links
+        story_links = story_links[:30]
+
+        for item in story_links:
+
+            title = item["title"]
+            url = item["url"]
+
+            try:
+                article_response = requests.get(
+                    url,
+                    timeout=20,
+                    headers={
+                        "User-Agent": (
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                            "AppleWebKit/537.36 (KHTML, like Gecko) "
+                            "Chrome/142.0 Safari/537.36"
+                        )
+                    },
+                )
+
+                article_response.raise_for_status()
+
+            except requests.RequestException as e:
+                print(
+                    f"KOAT article request failed "
+                    f"{url}: {e}"
+                )
+                continue
+
+            article_soup = BeautifulSoup(
+                article_response.text,
+                "html.parser"
+            )
+
+            #
+            # Title
+            #
+            og_title = article_soup.find(
+                "meta",
+                property="og:title"
+            )
+
+            if og_title and og_title.get("content"):
+                title = og_title["content"].strip()
+
+            #
+            # Body / description
+            #
+            body = ""
+
+            description = article_soup.find(
+                "meta",
+                property="og:description"
+            )
+
+            if description:
+                body = description.get(
+                    "content",
+                    ""
+                ).strip()
+
+            if not body:
+                description = article_soup.find(
+                    "meta",
+                    attrs={"name": "description"}
+                )
+
+                if description:
+                    body = description.get(
+                        "content",
+                        ""
+                    ).strip()
+
+            #
+            # Image
+            #
+            img = ""
+
+            image_tag = article_soup.find(
+                "meta",
+                property="og:image"
+            )
+
+            if image_tag:
+                img = image_tag.get(
+                    "content",
+                    ""
+                )
+
+            #
+            # Author
+            #
+            author = ""
+
+            author_tag = article_soup.find(
+                "meta",
+                attrs={"name": "author"}
+            )
+
+            if author_tag:
+                author = author_tag.get(
+                    "content",
+                    ""
+                )
+
+            #
+            # Published date
+            #
+            published = ""
+
+            published_tag = article_soup.find(
+                "meta",
+                property="article:published_time"
+            )
+
+            if published_tag:
+                published = published_tag.get(
+                    "content",
+                    ""
+                )
+
+            # Try alternate Hearst metadata
+            if not published:
+                published_tag = article_soup.find(
+                    "meta",
+                    attrs={"name": "pubdate"}
+                )
+
+                if published_tag:
+                    published = published_tag.get(
+                        "content",
+                        ""
+                    )
+
+            if published:
+                try:
+                    published = parse(
+                        published
+                    ).strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+
+                except Exception as e:
+                    print(
+                        f"KOAT date parse error "
+                        f"{url}: {e}"
+                    )
+
+                    published = ""
+
+            if not published:
+                print(
+                    f"KOAT skipping article with no date: "
+                    f"{title}"
+                )
+                continue
+
+            #
+            # Updated date
+            #
             updated = ""
 
-            add_article(title, body, author, published, updated, url, img)
+            updated_tag = article_soup.find(
+                "meta",
+                property="article:modified_time"
+            )
+
+            if updated_tag:
+                updated = updated_tag.get(
+                    "content",
+                    ""
+                )
+
+                if updated:
+                    try:
+                        updated = parse(
+                            updated
+                        ).strftime(
+                            "%Y-%m-%dT%H:%M:%S"
+                        )
+                    except Exception:
+                        updated = ""
+
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
 
         return
 
     def krqe(news_source):
         """
-          ###############################################
-          # Scrape "KRQE Local Reporting you can Trust"
-          ###############################################
-          """
-        news_soup = get_soup(news_source.feed_url)
-        if not news_soup:
-            return
-        tags = news_soup.find_all("div", class_="article-list__article-text",
-                                  attrs={'data-article-list-id': "article-list4"})
-        if not tags:
-            write_error_log(f"News source {news_source.feed_url} returned no results.")
-            return
-        for tag in tags:
-            title = get_value(tag, 'a', attr='data-link-label')
+        ###############################################
+        # Scrape "KRQE Local Reporting You Can Trust"
+        # RSS version
+        ###############################################
+        """
 
-            url = get_value(tag, 'a', attr='href')
+        feed_url = "https://www.krqe.com/feed/"
 
-            news_soup = get_soup(url)
-            if not news_soup:
+        try:
+            response = requests.get(
+                feed_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=20,
+            )
+
+            response.raise_for_status()
+
+        except requests.RequestException as e:
+            print(f"KRQE RSS request failed: {e}")
+            return
+
+        feed = feedparser.parse(response.content)
+
+        print(f"KRQE RSS entries: {len(feed.entries)}")
+
+        for entry in feed.entries:
+
+            title = getattr(entry, "title", "").strip()
+
+            url = getattr(entry, "link", "").strip()
+
+            author = getattr(entry, "author", "")
+
+            body = ""
+
+            if hasattr(entry, "summary"):
+                body = BeautifulSoup(
+                    entry.summary,
+                    "html.parser"
+                ).text.strip()
+
+            published = ""
+
+            if hasattr(entry, "published"):
+                try:
+                    published_dt = parse(entry.published)
+
+                    published = published_dt.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+
+                except Exception as e:
+                    print(
+                        f"KRQE date error "
+                        f"{entry.published!r}: {e}"
+                    )
+
+            if not published:
                 continue
-
-            img = get_meta(news_soup, {'property': 'og:image'})
-
-            body = get_value(news_soup, 'div', 'article-body')
-
-            author = get_value(news_soup, 'p', 'article-authors')
-
-            published = get_date(tag, 'time', attr='datetime')
 
             updated = ""
 
-            add_article(title, body, author, published, updated, url, img)
+            if hasattr(entry, "updated"):
+                try:
+                    updated_dt = parse(entry.updated)
+
+                    updated = updated_dt.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+
+                except Exception:
+                    updated = ""
+
+            img = ""
+
+            # 1. media:content
+            if hasattr(entry, "media_content"):
+                for media in entry.media_content:
+                    candidate = media.get("url", "")
+                    if candidate:
+                        img = candidate
+                        break
+
+            # 2. media:thumbnail
+            if not img and hasattr(entry, "media_thumbnail"):
+                for media in entry.media_thumbnail:
+                    candidate = media.get("url", "")
+                    if candidate:
+                        img = candidate
+                        break
+
+            # 3. RSS enclosure
+            if not img and hasattr(entry, "enclosures"):
+                for enclosure in entry.enclosures:
+                    candidate = enclosure.get("href", "")
+                    media_type = enclosure.get("type", "")
+
+                    if candidate and media_type.startswith("image/"):
+                        img = candidate
+                        break
+
+            # 4. Search the summary HTML
+            if not img and hasattr(entry, "summary"):
+                summary_soup = BeautifulSoup(
+                    entry.summary,
+                    "html.parser"
+                )
+
+                img_tag = summary_soup.find("img")
+
+                if img_tag:
+                    img = (
+                            img_tag.get("src")
+                            or img_tag.get("data-src")
+                            or img_tag.get("data-lazy-src")
+                            or ""
+                    )
+
+            # 5. Search full RSS content HTML
+            if not img and hasattr(entry, "content"):
+                for content_item in entry.content:
+                    content_html = content_item.get("value", "")
+
+                    content_soup = BeautifulSoup(
+                        content_html,
+                        "html.parser"
+                    )
+
+                    img_tag = content_soup.find("img")
+
+                    if img_tag:
+                        img = (
+                                img_tag.get("src")
+                                or img_tag.get("data-src")
+                                or img_tag.get("data-lazy-src")
+                                or ""
+                        )
+
+                        if img:
+                            break
+
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
+
         return
 
     def kob(news_source):
