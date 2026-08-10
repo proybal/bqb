@@ -977,56 +977,175 @@ def scrape_news():
     def eastern_nm_news(news_source):
         """
         ###############################################
-        # Scrape "Eastern New Mexico News" (clovis)
+        # Scrape "Eastern New Mexico News"
+        # RSS version
         ###############################################
         """
 
-        def has_author(tag):
-            return tag.name == 'a' and tag.has_attr('href') and tag.has_attr('aria-label') and tag.attrs[
-                'aria-label'] == title
+        feed_url = "https://www.easternnewmexiconews.com/rss"
 
-        # tags = get_tags(news_source, 'div', class_name='hmfunction_sectioncontainer')
-        tags = get_tags(news_source, 'div')
-        if not tags:
+        try:
+            response = requests.get(
+                feed_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=20,
+            )
+
+            response.raise_for_status()
+
+        except requests.RequestException as e:
+            print(f"Eastern NM News RSS request failed: {e}")
             return
-        for tag in tags:
 
-            title = get_text(tag, 'h3')
+        feed = feedparser.parse(response.content)
 
-            body = get_body_text(tag)
+        print(
+            f"Eastern NM News RSS entries: "
+            f"{len(feed.entries)}"
+        )
 
-            author = get_text(tag, 'a')
+        for entry in feed.entries:
 
-            a_tag = tag.find(has_author)
-            if a_tag:
-                url = a_tag.attrs['href']
-            else:
-                url = ""
+            title = getattr(
+                entry,
+                "title",
+                ""
+            ).strip()
 
-            news_soup = get_soup(url)
-            if not news_soup:
+            url = getattr(
+                entry,
+                "link",
+                ""
+            ).strip()
+
+            author = getattr(
+                entry,
+                "author",
+                ""
+            )
+
+            body = ""
+
+            if hasattr(entry, "summary"):
+                body = BeautifulSoup(
+                    entry.summary,
+                    "html.parser"
+                ).get_text(
+                    " ",
+                    strip=True
+                )
+
+            published = ""
+
+            if hasattr(entry, "published"):
+                try:
+                    published = parse(
+                        entry.published
+                    ).strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+
+                except Exception as e:
+                    print(
+                        f"Eastern NM News date error "
+                        f"{entry.published!r}: {e}"
+                    )
+
+            if not published:
                 continue
 
-            img_tag = news_soup.find('div', class_='top_image_left')
-            img = ""
-            if img_tag:
-                img_tag = img_tag.find('img')
-                if img_tag:
-                    img = news_source.source + img_tag.attrs['src']
-
-            dt_tag = tag.find('span')
-            if dt_tag:
-                published = dt_tag.text
-                published = parse(published[published.find('/') - 2:])
-                published = published.strftime("%Y-%m-%dT%H:%M:%S")
-            else:
-                published = ""
             updated = ""
 
-            add_article(title, body, author, published, updated, url, img)
+            if hasattr(entry, "updated"):
+                try:
+                    updated = parse(
+                        entry.updated
+                    ).strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+
+                except Exception:
+                    updated = ""
+
+            img = ""
+
+            # media:content
+            if hasattr(entry, "media_content"):
+                for media in entry.media_content:
+                    candidate = media.get("url", "")
+
+                    if candidate:
+                        img = candidate
+                        break
+
+            # media:thumbnail
+            if not img and hasattr(
+                    entry,
+                    "media_thumbnail"
+            ):
+                for media in entry.media_thumbnail:
+                    candidate = media.get(
+                        "url",
+                        ""
+                    )
+
+                    if candidate:
+                        img = candidate
+                        break
+
+            # enclosure
+            if not img and hasattr(
+                    entry,
+                    "enclosures"
+            ):
+                for enclosure in entry.enclosures:
+                    candidate = enclosure.get(
+                        "href",
+                        ""
+                    )
+
+                    media_type = enclosure.get(
+                        "type",
+                        ""
+                    )
+
+                    if (
+                            candidate
+                            and media_type.startswith("image/")
+                    ):
+                        img = candidate
+                        break
+
+            # image inside summary
+            if (
+                    not img
+                    and hasattr(entry, "summary")
+            ):
+                summary_soup = BeautifulSoup(
+                    entry.summary,
+                    "html.parser"
+                )
+
+                img_tag = summary_soup.find("img")
+
+                if img_tag:
+                    img = (
+                            img_tag.get("src")
+                            or img_tag.get("data-src")
+                            or ""
+                    )
+
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
 
         return
-
     def defensor_chieftain(news_source):
         """
         ###############################################
