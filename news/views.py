@@ -2302,20 +2302,13 @@ def scrape_news():
 
             elif news_source.scrape_type == News.SCRAPE_HTML:
 
-                function_name = (
-                        news_source.function or ""
-                ).strip()
-
-                if function_name.endswith("()"):
-                    function_name = function_name[:-2].strip()
-
-                scraper = SCRAPERS.get(function_name)
+                scraper = SCRAPERS.get(news_source.code)
 
                 if scraper is None:
                     write_error_log(
                         f"No HTML scraper registered for "
                         f"source='{news_source.title}', "
-                        f"function={news_source.function!r}"
+                        f"function={news_source.code}"
                     )
                     continue
 

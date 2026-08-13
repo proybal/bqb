@@ -167,7 +167,7 @@ class News(models.Model):
         default=SCRAPE_HTML,
     )
     published = models.BooleanField(default=False)
-    function = models.CharField(max_length=20)
+    code = models.CharField(max_length=20)
 
     def __str__(self):
         return self.title
