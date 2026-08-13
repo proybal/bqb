@@ -530,6 +530,12 @@ def scrape_news():
             if not img and url:
                 news_soup = get_soup(url)
 
+                if news_soup:
+                    img = get_meta(
+                        news_soup,
+                        {"property": "og:image"}
+                    )
+
             if not isinstance(img, str):
                 img = ""
 
