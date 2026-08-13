@@ -2308,7 +2308,7 @@ def scrape_news():
                     write_error_log(
                         f"No HTML scraper registered for "
                         f"source='{news_source.title}', "
-                        f"function={news_source.code}"
+                        f"code={news_source.code}"
                     )
                     continue
 
