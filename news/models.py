@@ -151,8 +151,23 @@ class News(models.Model):
     city = models.ForeignKey(Cities, null=True, on_delete=models.SET_NULL)
     county = models.ForeignKey(Counties, null=True, on_delete=models.SET_NULL)
     region = models.ForeignKey(Region, null=True, on_delete=models.SET_NULL)
-    function = models.CharField(max_length=20)
+    SCRAPE_HTML = "HTML"
+    SCRAPE_RSS = "RSS"
+    SCRAPE_WORDPRESS = "WORDPRESS_API"
+
+    SCRAPE_TYPE_CHOICES = [
+        (SCRAPE_HTML, "HTML"),
+        (SCRAPE_RSS, "RSS"),
+        (SCRAPE_WORDPRESS, "WordPress API"),
+    ]
+
+    scrape_type = models.CharField(
+        max_length=20,
+        choices=SCRAPE_TYPE_CHOICES,
+        default=SCRAPE_HTML,
+    )
     published = models.BooleanField(default=False)
+    function = models.CharField(max_length=20)
 
     def __str__(self):
         return self.title

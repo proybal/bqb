@@ -8,8 +8,7 @@ from django.views.generic import RedirectView
 
 from accounts.views import activate, loginPage, registerPage
 from news import views
-from news.admin import article_counts_view
-
+from news.admin import article_counts_view, submit_scrape_job_view
 
 urlpatterns = [
     path(
@@ -35,7 +34,11 @@ urlpatterns = [
         admin.site.admin_view(article_counts_view),
         name="article-counts",
     ),
-
+    path(
+        "admin/submit-scrape-job/",
+        admin.site.admin_view(submit_scrape_job_view),
+        name="submit-scrape-job",
+    ),
     path("admin/", admin.site.urls),
 
     path("manifest.json", views.manifest, name="manifest"),
@@ -59,7 +62,6 @@ urlpatterns = [
     path("", include("slideshow.urls")),
     path("", include("news.urls")),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(

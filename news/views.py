@@ -2,6 +2,7 @@
 import json
 import os
 import datetime
+import time
 
 import feedparser
 from django.conf import settings
@@ -330,6 +331,411 @@ def by_county(req, county):
 
 def scrape_news():
 
+    def scrape_rss(news_source):
+        """
+        Generic RSS scraper.
+        Expects news_source.feed_url to point to a valid RSS feed.
+        """
+
+        try:
+            response = requests.get(
+                news_source.feed_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=20,
+            )
+
+            response.raise_for_status()
+
+        except requests.RequestException as e:
+            write_error_log(
+                f"{news_source.title} RSS request failed: {e}"
+            )
+            return
+
+
+
+        feed = feedparser.parse(response.content)
+
+        MAX_RSS_ENTRIES = 30
+        for entry_num, entry in enumerate(feed.entries[:MAX_RSS_ENTRIES], start=1):
+
+            title = getattr(entry, "title", "").strip()
+            url = getattr(entry, "link", "").strip()
+            author = getattr(entry, "author", "")
+
+            # Body
+            body = ""
+
+            if hasattr(entry, "summary"):
+                body = BeautifulSoup(
+                    entry.summary,
+                    "html.parser"
+                ).get_text(
+                    " ",
+                    strip=True
+                )
+
+            # Published
+            published = ""
+
+            if hasattr(entry, "published"):
+                try:
+                    published = parse(
+                        entry.published
+                    ).strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+                except Exception as e:
+                    write_error_log(
+                        f"{news_source.title} date error "
+                        f"{entry.published!r}: {e}"
+                    )
+
+            if not published:
+                continue
+
+            # Updated
+            updated = ""
+
+            if hasattr(entry, "updated"):
+                try:
+                    updated = parse(
+                        entry.updated
+                    ).strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+                except Exception:
+                    updated = ""
+
+            # Image
+            # Image
+            img = ""
+
+            # 1. Prefer full-size image embedded in content
+            if hasattr(entry, "content"):
+                for content_item in entry.content:
+                    content_html = content_item.get("value", "")
+
+                    content_soup = BeautifulSoup(
+                        content_html,
+                        "html.parser"
+                    )
+
+                    img_tag = content_soup.find("img")
+
+                    if img_tag:
+                        img = (
+                                img_tag.get("src")
+                                or img_tag.get("data-src")
+                                or ""
+                        )
+
+                    if img:
+                        break
+
+            # 2. Then try summary HTML
+            if not img and hasattr(entry, "summary"):
+                summary_soup = BeautifulSoup(
+                    entry.summary,
+                    "html.parser"
+                )
+
+                img_tag = summary_soup.find("img")
+
+                if img_tag:
+                    img = (
+                            img_tag.get("src")
+                            or img_tag.get("data-src")
+                            or img_tag.get("data-lazy-src")
+                            or ""
+                    )
+
+            # 3. Then media_content
+            if not img and hasattr(entry, "media_content"):
+                for media in entry.media_content:
+                    candidate = media.get("url", "")
+                    if candidate:
+                        img = candidate
+                        break
+
+            # 4. Then enclosure
+            if not img and hasattr(entry, "enclosures"):
+                for enclosure in entry.enclosures:
+                    candidate = (
+                            enclosure.get("href")
+                            or enclosure.get("url")
+                            or ""
+                    )
+
+                    media_type = enclosure.get("type", "")
+
+                    if (
+                            candidate
+                            and (
+                            media_type.startswith("image/")
+                            or candidate.lower().endswith(
+                        (".jpg", ".jpeg", ".png", ".webp")
+                    )
+                    )
+                    ):
+                        img = candidate
+                        break
+
+            # 5. Thumbnail is last resort
+            if not img and hasattr(entry, "media_thumbnail"):
+                for media in entry.media_thumbnail:
+                    candidate = media.get("url", "")
+                    if candidate:
+                        img = candidate
+                        break
+            if not img and hasattr(entry, "summary"):
+                summary_soup = BeautifulSoup(
+                    entry.summary,
+                    "html.parser"
+                )
+
+                img_tag = summary_soup.find("img")
+
+                if img_tag:
+                    img = (
+                            img_tag.get("src")
+                            or img_tag.get("data-src")
+                            or img_tag.get("data-lazy-src")
+                            or ""
+                    )
+
+            if not img and hasattr(entry, "content"):
+                for content_item in entry.content:
+                    content_html = content_item.get("value", "")
+
+                    content_soup = BeautifulSoup(
+                        content_html,
+                        "html.parser"
+                    )
+
+                    img_tag = content_soup.find("img")
+
+                    if img_tag:
+                        img = (
+                                img_tag.get("src")
+                                or img_tag.get("data-src")
+                                or ""
+                        )
+
+                    if img:
+                        break
+
+            img = improve_feed_image(img)
+
+            if not img and url:
+                news_soup = get_soup(url)
+
+            if not isinstance(img, str):
+                img = ""
+
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
+    def scrape_wordpress_api(news_source, api_url=None):
+        if api_url is None:
+            api_url = news_source.feed_url
+
+        try:
+            response = requests.get(
+                api_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=20,
+            )
+
+            response.raise_for_status()
+
+            content_type = response.headers.get(
+                "Content-Type",
+                ""
+            ).lower()
+
+            if "application/json" not in content_type:
+                message = (
+                    f"{news_source.title} API expected JSON but received "
+                    f"{content_type or 'unknown content type'} "
+                    f"from {response.url}"
+                )
+
+                print(message)
+                write_error_log(message)
+                return
+
+            posts = response.json()
+
+        except requests.RequestException as e:
+            message = (
+                f"{news_source.title} API request error: {e}"
+            )
+
+            print(message)
+            write_error_log(message)
+            return
+
+        except ValueError as e:
+            message = (
+                f"{news_source.title} API JSON parse error: {e}"
+            )
+
+            print(message)
+            write_error_log(message)
+            return
+
+        if not isinstance(posts, list):
+            message = (
+                f"{news_source.title} API returned unexpected "
+                f"JSON type: {type(posts).__name__}"
+            )
+
+            print(message)
+            write_error_log(message)
+            return
+
+        print(
+            f"{news_source.title} API returned "
+            f"{len(posts)} posts"
+        )
+
+        for post in posts:
+
+            title_html = (
+                post.get("title", {})
+                .get("rendered", "")
+            )
+
+            title = BeautifulSoup(
+                title_html,
+                "html.parser"
+            ).get_text(
+                " ",
+                strip=True
+            )
+
+            url = post.get(
+                "link",
+                ""
+            )
+
+            excerpt_html = (
+                post.get("excerpt", {})
+                .get("rendered", "")
+            )
+
+            body = BeautifulSoup(
+                excerpt_html,
+                "html.parser"
+            ).get_text(
+                " ",
+                strip=True
+            )
+
+            published = post.get(
+                "date",
+                ""
+            )
+
+            if published:
+                published = published[:19]
+
+            updated = post.get(
+                "modified",
+                ""
+            )
+
+            if updated:
+                updated = updated[:19]
+
+            author = ""
+
+            embedded = post.get(
+                "_embedded",
+                {}
+            )
+
+            author_data = embedded.get(
+                "author",
+                []
+            )
+
+            if author_data:
+                author = author_data[0].get(
+                    "name",
+                    ""
+                )
+
+            img = ""
+
+            media_data = embedded.get(
+                "wp:featuredmedia",
+                []
+            )
+
+            if media_data:
+                img = media_data[0].get(
+                    "source_url",
+                    ""
+                )
+
+            if not title or not url or not published:
+                continue
+
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
+
+    def improve_feed_image(img):
+        if not img:
+            return ""
+
+        # Blogger / Blogspot images often contain a forced thumbnail size.
+        if (
+                "blogspot.com" in img
+                or "googleusercontent.com" in img
+                or "bp.blogspot.com" in img
+        ):
+            # Old Blogger style:
+            # /s72-c/
+            # /s320/
+            img = re.sub(
+                r"/s\d+(?:-c)?/",
+                "/s1600/",
+                img
+            )
+
+            # Newer Google image style:
+            # =s72-c
+            # =w300-h200
+            img = re.sub(
+                r"=s\d+(?:-c)?$",
+                "=s1600",
+                img
+            )
+
+            img = re.sub(
+                r"=w\d+-h\d+[^?]*$",
+                "=s1600",
+                img
+            )
+
+        return img
+
+
     def add_article(title, body, author, published, updated, url, img):
         if not published:
             write_error_log(f"News source {news_source.feed_url} has no published date.")
@@ -448,64 +854,6 @@ def scrape_news():
 
         return
 
-    def thepaper(news_source):
-        """
-        ########################################
-        # Scrape "The Paper" news
-        ########################################
-        """
-        tags = get_tags(news_source.feed_url, 'article', 'post')
-        if not tags:
-            return
-        for tag in tags:
-            title = get_value(tag, 'h2', 'entry-title')
-
-            body = cleanup(tag.text)
-
-            url = get_value(tag, 'a', attr='href', text=False)
-
-            img = get_img(tag, 'wp-post-image')
-
-            author = get_value(tag, 'span', 'author')
-
-            published = get_date(tag, 'time', 'published', 'datetime')
-
-            updated = get_date(tag, 'time', 'updated', 'datetime')
-
-            add_article(title, body, author, published, updated, url, img)
-
-    def joemonahan(news_source):
-        """
-        ###############################################
-        # Scrape "New Mexico Politics with Joe Monahan
-        ###############################################
-        """
-        tags = get_tags(news_source.feed_url, 'div', class_name="blogPost")
-        if not tags:
-            return
-        for tag in tags:
-            title_tag = tag.previous_sibling.previous_sibling
-            if title_tag and title_tag.text:
-                title = title_tag.text
-            else:
-                title = ""
-
-            body = cleanup(tag.text)
-
-            author = 'Joe Monahan'
-
-            img = get_img(tag)
-
-            published = tag.find('div', class_='byline')
-            if published:
-                published = published.text
-                published = parse(published[published.find('/') + 2:])
-                published = published.strftime("%Y-%m-%dT%H:%M:%S")
-            else:
-                published = ""
-            updated = ""
-
-            add_article(title, body, author, published, updated, news_source.feed_url, img)
 
     def newmexican(news_source):
         """
@@ -542,117 +890,193 @@ def scrape_news():
 
         return
 
-    def riograndesun(news_source):
-        """
-        ###############################################
-        # Scrape "Rio Grande Sun"
-        ###############################################
-        """
-        tags = get_tags(news_source.feed_url, 'article', 'tnt-asset-type-article')
-        if not tags:
-            return
-        for tag in tags:
-
-            title = get_value(tag, 'a', 'tnt-asset-link', 'aria-label', text=False)
-
-            url = news_source.source + get_value(tag, 'a', 'tnt-asset-link', 'href', text=False)
-
-            body = get_body_text(tag)
-
-            img = get_img(tag)
-
-            published = get_date(tag, 'time', attr='datetime')
-
-            updated = get_date(tag, 'time', 'tnt-update-recent', 'datetime')
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-            author_tag = news_soup.find('span', itemprop='author')
-            if author_tag:
-                author = cleanup(author_tag.text)
-            else:
-                author = ""
-
-            add_article(title, body, author, published, updated, url, img)
-        return
 
     def lascrucessun(news_source):
         """
         ###############################################
-        # Scrape "Las Cruces Sun"
+        # Scrape "Las Cruces Sun-News"
+        # Gannett listing-page version
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'a', 'p1-container')
-        if not tags:
+
+        try:
+            response = requests.get(
+                news_source.feed_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=20,
+            )
+
+            response.raise_for_status()
+
+        except requests.RequestException as e:
+            write_error_log(
+                f"Las Cruces Sun request failed: {e}"
+            )
             return
 
-        for tag in tags:
-            # # Skip if not a valid tag
-            # if tag.has_attr('rel'):
-            #     continue
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
 
-            title = get_value(tag, 'div', 'p1-title-spacer', text=True)
 
-            body = get_value(tag, attr='data-c-br')
+        story_urls = set()
+        article_count = 0
 
-            author = ""
+        for a in soup.find_all("a", href=True):
 
-            url = news_source.source + get_value(tag, attr='href')
+            href = a.get("href", "")
 
-            img = get_img(tag)
-
-            news_soup = get_soup(url)
-            if not news_soup:
+            # Only actual news stories.
+            if not href.startswith("/story/news/"):
                 continue
 
-            author = get_value(news_soup, "div", "gnt_ar_by")
+            url = urljoin(
+                news_source.feed_url,
+                href
+            )
 
-            published = get_date(tag, 'lit-timestamp', attr='publishdate')
+            if url in story_urls:
+                continue
 
-            updated = get_date(tag, 'lit-timestamp', attr='update-date')
+            story_urls.add(url)
 
-            add_article(title, body, author, published, updated, url, img)
+            title = a.get_text(
+                " ",
+                strip=True
+            )
+
+            if not title:
+                continue
+
+            # --------------------------------
+            # Published date from URL
+            #
+            # Example:
+            # /story/news/local/2026/08/11/...
+            # --------------------------------
+            date_match = re.search(
+                r"/(\d{4})/(\d{2})/(\d{2})/",
+                href
+            )
+
+            if not date_match:
+                print(
+                    f"Las Cruces Sun could not find date "
+                    f"in URL: {url}"
+                )
+                continue
+
+            year, month, day = date_match.groups()
+
+            published = (
+                f"{year}-{month}-{day}T00:00:00"
+            )
+
+            # --------------------------------
+            # Try to extract description from
+            # surrounding listing markup
+            # --------------------------------
+            body = ""
+
+            parent = a.parent
+
+            if parent:
+                # Look for nearby text that isn't
+                # simply the headline.
+                container = parent.parent
+
+                if container:
+                    text = container.get_text(
+                        " ",
+                        strip=True
+                    )
+
+                    if text and text != title:
+                        body = text
+
+                        if body.startswith(title):
+                            body = body[len(title):].strip()
+
+            # --------------------------------
+            # Image
+            # --------------------------------
+            img = ""
+
+            container = a
+
+            for _ in range(6):
+                if not container:
+                    break
+
+                img_tag = container.find("img")
+
+                if img_tag:
+                    img = (
+                            img_tag.get("data-gl-src")
+                            or img_tag.get("src")
+                            or img_tag.get("data-src")
+                            or ""
+                    )
+
+                    if not img:
+                        srcset = (
+                                img_tag.get("data-gl-srcset")
+                                or img_tag.get("srcset")
+                                or ""
+                        )
+
+                        if srcset:
+                            img = (
+                                srcset
+                                .split(",")[0]
+                                .strip()
+                                .split(" ")[0]
+                            )
+
+                    if img:
+                        img = urljoin(
+                            news_source.feed_url,
+                            img
+                        )
+
+                        img = re.sub(
+                            r'width=\d+',
+                            'width=600',
+                            img
+                        )
+
+                        img = re.sub(
+                            r'height=\d+',
+                            'height=400',
+                            img
+                        )
+
+                        break
+
+                container = container.parent
+
+            # Listing doesn't consistently provide
+            # an author, so leave blank.
+            author = ""
+
+            updated = ""
+
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
+
+            article_count += 1
+
         return
 
-    def hobbssun(news_source):
-        """
-        ###############################################
-        # Scrape "Hobbs Sun"
-        ###############################################
-        """
-        page_url = news_source.feed_url
-        PAGES = 12
-        # loop through PAGES of news
-        for page in range(1, PAGES):
-            if page > 1:
-                page_url = news_source.feed_url + '/page/' + str(page) + '/'
 
-            tags = get_tags(news_source, 'article')
-            if not tags:
-                return
-            for tag in tags:
-
-                title = get_text(tag, 'h2')
-
-                body = get_body_text(tag)
-
-                url = get_value(tag, 'a', attr='href')
-
-                img = get_value(tag, 'img', attr='data-src')
-
-                a_tag = tag.find('a', rel='author')
-                if a_tag and a_tag.text:
-                    author = a_tag.text
-                else:
-                    author = ""
-
-                published = get_date(tag, 'span', 'bdayh-date')
-                updated = ""
-
-                add_article(title, body, author, published, updated, url, img)
-
-        return
 
     def taosnews(news_source):
         """
@@ -693,195 +1117,209 @@ def scrape_news():
 
         return
 
-    def gallupsun(news_source):
-        """
-        ###############################################
-        # Scrape "Gallup Sun News"
-        ###############################################
-        """
 
-        def remove_suffix(input_string):
-            # Use regular expression to match "resized/" and underscore followed by one or more digits
-            pattern = re.compile(r'(images/resized/|_\d+)')
-            match = pattern.search(input_string)
-
-            # If the pattern is found, remove it
-            while match:
-                input_string = input_string[:match.start()] + input_string[match.end():]
-                match = pattern.search(input_string)
-
-            return input_string
-
-        # Example usage
-        input_string = "resized/some_text_before_2_3_second_last_underscore_to_remove.jpg"
-        result = remove_suffix(input_string)
-        PAGES = 3
-        page_url = news_source.feed_url
-        limitstart = 0
-        # loop through PAGES of news
-        page_url = news_source.feed_url
-        for page in range(1, PAGES):
-
-            tags = get_tags(page_url, 'div', class_name='contentpaneopen')
-            if not tags:
-                return
-            for tag in tags:
-                body = cleanup(tag.text)
-
-                title = get_value(tag, 'h2', 'contentheading', text=True)
-
-                url = news_source.source + get_value(tag, 'a', attr='href')
-
-                author = get_value(tag, 'span', 'createby', text=True)
-
-                # news_soup = get_soup(url)
-
-                img = news_source.source + remove_suffix(get_img(tag.find(class_="article-content")))
-
-                published = get_date(tag, 'span', 'createdate')
-
-                updated = ""
-
-                add_article(title, body, author, published, updated, url, img)
-
-                limitstart += 5
-                page_url = news_source.feed_url + '&limitstart=' + str(limitstart)
-
-        return
-
-    def artesia_news(news_source):
-        """
-        ###############################################
-        # Scrape "Artesian News"
-        ###############################################
-        """
-
-        def has_author(tag):
-            return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
-
-        tags = get_tags(news_source.feed_url, 'div', class_name="td-cpt-post")
-        if not tags:
-            return
-        for tag in tags:
-            url = get_value(tag, 'a', attr='href')
-
-            title = get_value(tag, 'a', attr='title')
-
-            img = get_value(tag, 'span', attr='data-img-url')
-
-            # body = get_body_text(tag)
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-            meta_tag = news_soup.find(has_author)
-            if meta_tag:
-                author = meta_tag.attrs['content']
-            else:
-                author = ""
-
-            d_tag = news_soup.find('meta', property='og:description')
-            if d_tag:
-                body = d_tag.attrs['content']
-            else:
-                body = ""
-
-            published = get_date(news_soup, 'time', attr='datetime')
-
-            updated = ""
-
-            add_article(title, body, author, published, updated, url, img)
-        return
 
     def newmexicosun(news_source):
         """
         ###############################################
         # Scrape "New Mexico Sun"
+        # HTML /stories page
         ###############################################
-
-        Note: "More News" could be added
         """
 
-        def has_author(tag):
-            return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
+        try:
+            response = requests.get(
+                news_source.feed_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=20,
+            )
+            response.raise_for_status()
 
-        tags = get_tags(news_source, 'div', class_name="news")
-        if not tags:
+        except requests.RequestException as e:
+            write_error_log(
+                f"New Mexico Sun request failed: {e}"
+            )
             return
-        for tag in tags:
-            url = news_source.source + get_value(tag, 'a', attr='href')
 
-            title = get_text(tag, re.compile('^h'))
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
 
-            img = get_img(tag)
+        story_links = []
 
-            body = get_value(tag, 'div', 'content')
+        for h3 in soup.find_all("h3"):
+            a_tag = h3.find("a", href=True)
 
-            news_soup = get_soup(url)
-            if not news_soup:
+            if not a_tag:
                 continue
 
-            author_tag = news_soup.find(has_author)
-            if author_tag:
-                author = author_tag.attrs['content']
-            else:
-                author = ""
+            title = a_tag.get_text(
+                " ",
+                strip=True
+            )
 
-            published = get_date(news_soup, 'meta', itemprop='datePublished')
+            url = urljoin(
+                news_source.feed_url,
+                a_tag["href"]
+            )
 
-            updated = get_date(news_soup, 'meta', itemprop='dateModified')
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
-
-    def pinonpost(news_source):
-        """
-        ###############################################
-        # Scrape "Pinon Post"
-        ###############################################
-        """
-
-        def has_author(tag):
-            return tag.name == 'meta' and tag.has_attr('name') and tag.attrs['name'] == 'author'
-
-        tags = get_tags(news_source.feed_url, "article", class_name='jeg_post')
-        if not tags:
-            return
-        for t, tag in enumerate(tags):
-            title = tag.text
-            if title.find('by Piñon') != -1:
-                title = title[:title.find('by Piñon')]
-            if title.find('by Renato') != -1:
-                title = title[:title.find('by Renato')]
-
-            url = get_value(tag, 'a', attr='href')
-
-            news_soup = get_soup(url)
-            if not news_soup:
+            if not title or not url:
                 continue
 
-            body = get_body_text(news_soup)
-            if body.find('by John'):
-                body = body[:body.find('by John')]
+            story_links.append(
+                {
+                    "title": title,
+                    "url": url,
+                    "tag": h3,
+                }
+            )
 
-            author_tag = news_soup.find(has_author)
+        print(
+            f"New Mexico Sun found "
+            f"{len(story_links)} stories"
+        )
+
+        for story in story_links:
+
+            title = story["title"]
+            url = story["url"]
+            h3 = story["tag"]
+
+            # Excerpt is typically immediately after the heading.
+            body = ""
+
+            next_tag = h3.find_next_sibling()
+
+            if next_tag:
+                body = next_tag.get_text(
+                    " ",
+                    strip=True
+                )
+
+            try:
+                article_response = requests.get(
+                    url,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                    timeout=20,
+                )
+
+                article_response.raise_for_status()
+
+            except requests.RequestException:
+                continue
+
+            article_soup = BeautifulSoup(
+                article_response.text,
+                "html.parser"
+            )
+
+            # Image
+            img = ""
+
+            img_tag = article_soup.find(
+                "meta",
+                property="og:image"
+            )
+
+            if img_tag:
+                img = img_tag.get(
+                    "content",
+                    ""
+                )
+
+            # Body fallback
+            if not body:
+                desc_tag = article_soup.find(
+                    "meta",
+                    property="og:description"
+                )
+
+                if desc_tag:
+                    body = desc_tag.get(
+                        "content",
+                        ""
+                    )
+
+            # Author
+            author = ""
+
+            author_tag = article_soup.find(
+                "meta",
+                attrs={"name": "author"}
+            )
+
             if author_tag:
-                author = author_tag.attrs['content']
-            else:
-                author = ""
+                author = author_tag.get(
+                    "content",
+                    ""
+                )
 
-            img = get_img(news_soup, 'wp-post-image', prefer='src')
+            # Published
+            published = ""
 
-            published = get_date(news_soup, 'span', 'published')
+            date_candidates = [
+                article_soup.find(
+                    "meta",
+                    property="article:published_time"
+                ),
+                article_soup.find(
+                    "meta",
+                    itemprop="datePublished"
+                ),
+                article_soup.find(
+                    "time",
+                    attrs={"datetime": True}
+                ),
+            ]
+
+            for dt_tag in date_candidates:
+                if not dt_tag:
+                    continue
+
+                if dt_tag.name == "meta":
+                    raw_date = dt_tag.get(
+                        "content",
+                        ""
+                    )
+                else:
+                    raw_date = dt_tag.get(
+                        "datetime",
+                        ""
+                    )
+
+                if raw_date:
+                    try:
+                        published = parse(
+                            raw_date
+                        ).strftime(
+                            "%Y-%m-%dT%H:%M:%S"
+                        )
+                        break
+                    except Exception:
+                        pass
+
+            if not published:
+                print(
+                    f"New Mexico Sun skipping "
+                    f"article with no date: {title}"
+                )
+                continue
 
             updated = ""
 
-            add_article(title, body, author, published, updated, url, img)
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
 
-            if t == 20:
-                break
         return
+
 
     def lasvegasoptic(news_source):
         """
@@ -945,207 +1383,8 @@ def scrape_news():
 
         return
 
-    def farmingtondaily(news_source):
-        """
-        ###############################################
-        # Scrape "Farmington Daily Times"
-        ###############################################
-        """
-        tags = get_tags(news_source.feed_url, 'div', class_name="frontpage-headlines-title")
 
-        for tag in tags:
-            title = cleanup(tag.text)
 
-            url = get_value(tag, 'a', attr='href')
-
-            news_soup = get_soup(url)
-
-            img = get_img(news_soup, class_name='image')
-
-            body = get_body_text(news_soup)
-
-            author = get_meta(news_soup, {'name': 'author'})
-
-            published = get_meta(news_soup, {'name': 'pubdate'})
-
-            updated = ''
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
-
-    def eastern_nm_news(news_source):
-        """
-        ###############################################
-        # Scrape "Eastern New Mexico News"
-        # RSS version
-        ###############################################
-        """
-
-        feed_url = "https://www.easternnewmexiconews.com/rss"
-
-        try:
-            response = requests.get(
-                feed_url,
-                headers={"User-Agent": "Mozilla/5.0"},
-                timeout=20,
-            )
-
-            response.raise_for_status()
-
-        except requests.RequestException as e:
-            print(f"Eastern NM News RSS request failed: {e}")
-            return
-
-        feed = feedparser.parse(response.content)
-
-        print(
-            f"Eastern NM News RSS entries: "
-            f"{len(feed.entries)}"
-        )
-
-        for entry in feed.entries:
-
-            title = getattr(
-                entry,
-                "title",
-                ""
-            ).strip()
-
-            url = getattr(
-                entry,
-                "link",
-                ""
-            ).strip()
-
-            author = getattr(
-                entry,
-                "author",
-                ""
-            )
-
-            body = ""
-
-            if hasattr(entry, "summary"):
-                body = BeautifulSoup(
-                    entry.summary,
-                    "html.parser"
-                ).get_text(
-                    " ",
-                    strip=True
-                )
-
-            published = ""
-
-            if hasattr(entry, "published"):
-                try:
-                    published = parse(
-                        entry.published
-                    ).strftime(
-                        "%Y-%m-%dT%H:%M:%S"
-                    )
-
-                except Exception as e:
-                    print(
-                        f"Eastern NM News date error "
-                        f"{entry.published!r}: {e}"
-                    )
-
-            if not published:
-                continue
-
-            updated = ""
-
-            if hasattr(entry, "updated"):
-                try:
-                    updated = parse(
-                        entry.updated
-                    ).strftime(
-                        "%Y-%m-%dT%H:%M:%S"
-                    )
-
-                except Exception:
-                    updated = ""
-
-            img = ""
-
-            # media:content
-            if hasattr(entry, "media_content"):
-                for media in entry.media_content:
-                    candidate = media.get("url", "")
-
-                    if candidate:
-                        img = candidate
-                        break
-
-            # media:thumbnail
-            if not img and hasattr(
-                    entry,
-                    "media_thumbnail"
-            ):
-                for media in entry.media_thumbnail:
-                    candidate = media.get(
-                        "url",
-                        ""
-                    )
-
-                    if candidate:
-                        img = candidate
-                        break
-
-            # enclosure
-            if not img and hasattr(
-                    entry,
-                    "enclosures"
-            ):
-                for enclosure in entry.enclosures:
-                    candidate = enclosure.get(
-                        "href",
-                        ""
-                    )
-
-                    media_type = enclosure.get(
-                        "type",
-                        ""
-                    )
-
-                    if (
-                            candidate
-                            and media_type.startswith("image/")
-                    ):
-                        img = candidate
-                        break
-
-            # image inside summary
-            if (
-                    not img
-                    and hasattr(entry, "summary")
-            ):
-                summary_soup = BeautifulSoup(
-                    entry.summary,
-                    "html.parser"
-                )
-
-                img_tag = summary_soup.find("img")
-
-                if img_tag:
-                    img = (
-                            img_tag.get("src")
-                            or img_tag.get("data-src")
-                            or ""
-                    )
-
-            add_article(
-                title,
-                body,
-                author,
-                published,
-                updated,
-                url,
-                img,
-            )
-
-        return
     def defensor_chieftain(news_source):
         """
         ###############################################
@@ -1322,301 +1561,7 @@ def scrape_news():
 
         return
 
-    def sc_daily_press(news_source):
-        """
-        ###############################################
-        # Scrape "Silver City Daily Press"
-        ###############################################
-        """
-        tags = get_tags(news_source.feed_url, 'div', ['item-container', 'post-content'])
-        if not tags:
-            return
 
-        for tag in tags:
-
-            title = get_text(tag, 'h2')
-
-            h2_tag = tag.find('h2')
-
-            url = get_value(h2_tag, 'a', attr='href')
-
-            img = ""
-            img_tag = tag.select_one('div.entry-bg, div.post-image-small')
-            pattern = re.compile(r'https://[^\s\)]+')
-            if img_tag:
-                if img_tag.has_attr('style'):
-                    img = img_tag.attrs['style']
-                    # Use the findall method to extract all matches of the pattern in the input string
-                    matches = pattern.findall(img)
-                    # Display the extracted URLs
-                    img = matches[0]
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-
-            body = get_meta(news_soup, {'property': "og:description"})
-
-            if not img:
-                img = get_meta(news_soup, {'property': 'og:image'})
-
-            author = get_meta(news_soup, {'name': "author"})
-
-            published = get_date(tag, 'span', 'date')
-            if not published:
-                published = get_date(tag, 'time', 'published', 'datetime')
-
-            updated = ""
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
-
-    def nm_political_report(news_source):
-        """
-        ###############################################
-        # Scrape "New Mexico Political Report"
-        # WordPress REST API
-        ###############################################
-        """
-
-        api_url = (
-            "https://nmpoliticalreport.com/"
-            "wp-json/wp/v2/posts?per_page=20&_embed=1"
-        )
-
-        try:
-            response = requests.get(
-                api_url,
-                headers={
-                    "User-Agent": "Mozilla/5.0"
-                },
-                timeout=20,
-            )
-
-            response.raise_for_status()
-            posts = response.json()
-
-        except Exception as e:
-            print(f"NM Political Report API error: {e}")
-            return
-
-        print(f"NM Political Report API returned {len(posts)} posts")
-
-        for post in posts:
-
-            # Title
-            title_html = (
-                post.get("title", {})
-                .get("rendered", "")
-            )
-
-            title = BeautifulSoup(
-                title_html,
-                "html.parser"
-            ).get_text().strip()
-
-            # URL
-            url = post.get("link", "")
-
-            # Body / excerpt
-            excerpt_html = (
-                post.get("excerpt", {})
-                .get("rendered", "")
-            )
-
-            body = BeautifulSoup(
-                excerpt_html,
-                "html.parser"
-            ).get_text().strip()
-
-            # Published date
-            published = post.get("date", "")
-
-            if published:
-                published = published[:19]
-
-            # Updated date
-            updated = post.get("modified", "")
-
-            if updated:
-                updated = updated[:19]
-
-            # Author
-            author = ""
-
-            embedded = post.get("_embedded", {})
-
-            author_data = embedded.get("author", [])
-
-            if author_data:
-                author = author_data[0].get(
-                    "name",
-                    ""
-                )
-
-            # Featured image
-            img = ""
-
-            media_data = embedded.get(
-                "wp:featuredmedia",
-                []
-            )
-
-            if media_data:
-                img = media_data[0].get(
-                    "source_url",
-                    ""
-                )
-
-            add_article(
-                title,
-                body,
-                author,
-                published,
-                updated,
-                url,
-                img,
-            )
-
-        return
-
-
-    def alamagordo_daily(news_source):
-        """
-
-        Problems with site, in the middle of rewrite, site errors out.... not 403
-        Check on sites sanity regularly 10/30/25
-
-        ###############################################
-        # Scrape "Alamagordo Daily Press"
-        ###############################################
-        """
-
-        ####################################
-        return
-        ####################################
-
-        tags = get_tags(news_source.feed_url, 'a', class_name='gnt_m_flm_a')
-        tags = get_tags(news_source.feed_url, 'article')
-        if not tags:
-            return
-        for tag in tags:
-            title = tag.text
-            body = tag.text
-            url = news_source.source + tag.attrs['href']
-            img_tag = tag.find('img')
-            if img_tag:
-                img = news_source.source + img_tag.attrs['data-gl-src']
-                img = img[0: img.find('?')]
-            else:
-                img = ""
-            img = get_img(tag)
-            published = get_date(tag, 'div', 'gnt_m_flm_sbt', 'data-c-dt')
-            if not published:
-                published = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            updated = ""
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-
-            author = ""
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
-
-    def ruidoso_news(news_source):
-        """
-        ###############################################
-        # Scrape "Ruidoso Daily News"
-        ###############################################
-
-
-        Problems with site, in the middle of rewrite, site errors out.... not 403. Modal says "Issue Detected" when
-        accessed from browser session.
-        Check on sites sanity regularly 10/30/25
-
-
-        """
-
-        def has_author(tag):
-            return tag.name == 'meta' and tag.has_attr('content') and tag.has_attr('property') \
-                and tag.attrs['property'] == 'article:author'
-
-        ####################################
-        return
-        ####################################
-
-        tags = get_tags(news_source.feed_url, 'a', class_name='gnt_m_flm_a')
-        if not tags:
-            return
-        for tag in tags:
-            # if tag.has_attr('data-c-br'):
-            title = tag.text
-            if tag.has_attr('data-c-br'):
-                body = tag.attrs['data-c-br']
-            else:
-                body = ""
-            url = ""
-            if tag.has_attr('href'):
-                url = news_source.source + tag.attrs['href']
-            if not url and tag.has_attr('data-gl-src'):
-                url = tag.attrs['data-gl-src']
-            if not url:
-                continue
-            updated = ""
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-
-            img = get_meta(news_soup, {'property': 'og:image'})
-            published = get_date(tag, 'div', 'gnt_m_flm_sbt', 'data-c-dt')
-            if not published:
-                dt = get_value(news_soup, 'div', 'gnt_ar_dt', 'aria-label', False)
-                if dt:
-                    published = parse(dt[dt.find('Published') + 10:dt.find('Updated')]).strftime("%Y-%m-%dT%H:%M:%S")
-                    if dt.find('Updated') != -1:
-                        updated = parse(dt[dt.find('Updated') + 8:]).strftime("%Y-%m-%dT%H:%M:%S")
-
-            meta_tag = news_soup.find(has_author)
-            if meta_tag:
-                author = meta_tag.attrs['content']
-            else:
-                author = ""
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
-
-    def abq_raw(news_source):
-        """
-        ###############################################
-        # Scrape "Abq Raw"
-        ###############################################
-        """
-        tags = get_tags(news_source.feed_url, 'div', class_name='mg-blog-post')
-        if not tags:
-            return
-        for tag in tags:
-
-            title = get_value(tag, 'h4', 'title')
-
-            url = get_value(tag, 'a', attr='href')
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-            img = get_value(news_soup, 'img', 'wp-post-image', 'src', False)
-            body = get_meta(news_soup, {'property': 'og:description'})
-            published = get_date(news_soup, 'meta', property='article:published_time')
-            updated = get_date(news_soup, 'meta', property='article:modified_time')
-            author = get_meta(news_soup, {'name': 'author'})
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
 
     def valencia_county(news_source):
         """
@@ -1663,83 +1608,6 @@ def scrape_news():
 
         return
 
-    def the_independent(news_source):
-        """
-        ###############################################
-        # Scrape "Edgewood News"
-        ###############################################
-
-        """
-
-        return
-        news_soup = get_soup(news_source.feed_url)
-        if not news_soup:
-            return
-        tags = news_soup.find_all('article')
-        tags = get_tags(news_soup.find_all('article'))
-        if not tags:
-            write_error_log(f"News source {news_source.feed_url} returned no results.")
-            return
-        for tag in tags:
-
-            title = get_value(tag, 'h2', 'entry-title')
-
-            body = get_value(tag, 'div', 'entry-summary')
-
-            img = get_img(tag, 'wp-post-image')
-
-            url = get_value(tag, 'a', attr='href')
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-
-            if not img:
-                img = get_img(news_soup, 'wp-post-image')
-            if not body:
-                body = get_body_text(news_soup)
-
-            author = get_value(tag, 'a', 'url')
-
-            published = get_date(news_soup, 'time', 'published')
-            updated = get_date(news_soup, 'time', 'updated')
-            if published:
-                add_article(title, body, author, published, updated, url, img)
-        return
-
-    def cebola_citizen(news_source):
-        """
-        ###############################################
-        # Scrape "Cebola Citizen (Grants)"
-        ###############################################
-        """
-        tags = get_tags(news_source.feed_url, 'div', class_name='views-row')
-        if not tags:
-            return
-        for tag in tags:
-
-            title = get_value(tag, 'div', 'views-field-title')
-
-            author = get_value(tag, 'div', 'views-field-uid')
-
-            body = get_value(tag, 'div', 'views-field-body')
-
-            url = news_source.source + get_value(tag, 'a', attr='href')
-
-            img = news_source.source + get_value(tag, 'img', attr='src')
-
-            # Dont display Site logo
-            if img.find(
-                    'https://www.cibolacitizen.com/sites/cibolacitizen.com/files/styles/article_420/public/default_images/Cibola%20Default.jpg?itok=wS5C-KQf') != -1:
-                img = ""
-
-            published = get_date(tag, 'div', 'views-field-created')
-
-            updated = ""
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
 
     def roosevelt_review(news_source):
         """
@@ -1769,54 +1637,6 @@ def scrape_news():
 
         return
 
-    def current_argus(news_source):
-        """
-        ###############################################
-        # Scrape "Carlsbad Current Argus"
-        ###############################################
-
-
-        Same problem with "Issue Detected".
-
-
-        """
-
-        return
-
-        news_soup = get_soup(news_source.feed_url)
-        if not news_soup:
-            return
-        tags = news_soup.find_all('a', class_=['gnt_m_he', 'gnt_m_flm_a'], href=True)
-        if not tags:
-            write_error_log(f"News source {news_source.feed_url} returned no results.")
-            return
-        for tag in tags:
-            if tag.has_attr('href'):
-                title = cleanup(tag.text)
-
-                body = get_value(tag, attr='data-c-br')
-
-                url = news_source.source + tag.attrs['href']
-
-                news_soup = get_soup(url)
-                if not news_soup:
-                    continue
-
-                meta_tag = news_soup.find('div', class_='gnt_ar_by')
-
-                if meta_tag and meta_tag.text:
-                    author = meta_tag.text
-                else:
-                    author = ""  # Get article author if present
-
-                img = get_img(tag)
-
-                published = get_date(tag, 'div', attr='data-c-dt')
-
-                updated = ""
-
-                add_article(title, body, author, published, updated, url, img)
-        return
 
     def deming_headlight(news_source):
         """
@@ -1850,67 +1670,230 @@ def scrape_news():
         """
         ###############################################
         # Scrape "Rio Rancho Observer"
+        # Labrador CMS HTML version
         ###############################################
         """
-        tags = get_tags(news_source.feed_url, 'div', class_name='card-container')
-        if not tags:
+
+        try:
+            response = requests.get(
+                news_source.feed_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=20,
+            )
+            response.raise_for_status()
+
+        except requests.RequestException as e:
+            write_error_log(
+                f"Rio Rancho Observer request failed: {e}"
+            )
             return
-        for tag in tags:
 
-            title = get_value(tag, 'a', attr='aria-label')
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
 
-            url = news_source.feed_url + get_value(tag, 'a', attr='href')
+        story_links = []
 
-            author = get_value(tag, 'a', 'url')
+        for a in soup.find_all("a", href=True):
+            href = a.get("href", "")
+            title = a.get_text(" ", strip=True)
 
-            body = get_text(tag, 'p')
-
-            news_soup = get_soup(url)
-            if not news_soup:
+            if not title:
                 continue
-            img = get_meta(news_soup, {'property': 'og:image'})
 
-            published = get_date(news_soup, 'time', 'tnt-date', 'datetime')
+            if not (
+                    "/news/" in href
+                    or "/business/" in href
+            ):
+                continue
+
+            if not re.search(r"/\d+$", href):
+                continue
+
+            url = urljoin(
+                news_source.feed_url,
+                href
+            )
+
+            if any(
+                    item["url"] == url
+                    for item in story_links
+            ):
+                continue
+
+            story_links.append({
+                "title": title,
+                "url": url,
+            })
+
+        print(
+            f"Rio Rancho Observer found "
+            f"{len(story_links)} story links"
+        )
+
+        for item in story_links:
+
+            title = item["title"]
+            url = item["url"]
+
+            try:
+                article_response = requests.get(
+                    url,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                    timeout=20,
+                )
+
+                article_response.raise_for_status()
+
+            except requests.RequestException as e:
+                print(
+                    f"Rio Rancho Observer article request failed: "
+                    f"{url}: {e}"
+                )
+                continue
+
+            article_soup = BeautifulSoup(
+                article_response.text,
+                "html.parser"
+            )
+
+            # Title
+            og_title = article_soup.find(
+                "meta",
+                property="og:title"
+            )
+
+            if og_title and og_title.get("content"):
+                title = og_title["content"].strip()
+
+            # Body / description
+            body = ""
+
+            description = article_soup.find(
+                "meta",
+                property="og:description"
+            )
+
+            if description:
+                body = description.get(
+                    "content",
+                    ""
+                ).strip()
+
+            # Image
+            img = ""
+
+            image_tag = article_soup.find(
+                "meta",
+                property="og:image"
+            )
+
+            if image_tag:
+                img = image_tag.get(
+                    "content",
+                    ""
+                )
+
+            # Author
+            author = ""
+
+            author_tag = article_soup.find(
+                "meta",
+                attrs={"name": "author"}
+            )
+
+            if author_tag:
+                author = author_tag.get(
+                    "content",
+                    ""
+                )
+
+            # Published
+            published = ""
+
+            date_candidates = [
+                article_soup.find(
+                    "meta",
+                    property="article:published_time"
+                ),
+                article_soup.find(
+                    "meta",
+                    itemprop="datePublished"
+                ),
+                article_soup.find(
+                    "time",
+                    attrs={"datetime": True}
+                ),
+            ]
+
+            for dt_tag in date_candidates:
+                if not dt_tag:
+                    continue
+
+                if dt_tag.name == "meta":
+                    raw_date = dt_tag.get(
+                        "content",
+                        ""
+                    )
+                else:
+                    raw_date = dt_tag.get(
+                        "datetime",
+                        ""
+                    )
+
+                if raw_date:
+                    try:
+                        published = parse(
+                            raw_date
+                        ).strftime(
+                            "%Y-%m-%dT%H:%M:%S"
+                        )
+                        break
+
+                    except Exception:
+                        pass
+
+            if not published:
+                print(
+                    f"Rio Rancho Observer skipping article "
+                    f"with no date: {title}"
+                )
+                continue
+
+            # Updated
             updated = ""
 
-            add_article(title, body, author, published, updated, url, img)
+            modified_tag = article_soup.find(
+                "meta",
+                property="article:modified_time"
+            )
 
-        return
+            if modified_tag:
+                raw_updated = modified_tag.get(
+                    "content",
+                    ""
+                )
 
-    def source_nm(news_source):
-        """
-         ###############################################
-         # Scrape "Source NM News"
-         ###############################################
-         """
+                if raw_updated:
+                    try:
+                        updated = parse(
+                            raw_updated
+                        ).strftime(
+                            "%Y-%m-%dT%H:%M:%S"
+                        )
+                    except Exception:
+                        updated = ""
 
-        page_url = news_source.feed_url
-        PAGES = 5
-        # loop through PAGES of news
-        for page in range(1, PAGES):
-            tags = get_tags(news_source.feed_url, 'div', class_name='archiveCard')
-            if not tags:
-                return
-            for tag in tags:
-                title = get_text(tag, 'h3')
-
-                url = get_value(tag, 'a', attr='href')
-
-                body = get_body_text(tag)
-
-                author = get_value(tag, 'a', 'author')
-
-                img = get_value(tag, 'img', attr='src')
-
-                dt_tag = tag.find_all('span', class_='archiveByline')[-1]
-                published = parse(dt_tag.text)
-                published = published.strftime("%Y-%m-%dT%H:%M:%S")
-
-                updated = ""
-
-                add_article(title, body, author, published, updated, url, img)
-
-            page_url = news_source.source + '/page/' + str(page) + '/'
+            add_article(
+                title,
+                body,
+                author,
+                published,
+                updated,
+                url,
+                img,
+            )
 
         return
 
@@ -1969,7 +1952,6 @@ def scrape_news():
                 "url": url,
             })
 
-        print(f"KOAT found {len(story_links)} unique story links")
 
         # Keep this reasonable -- homepage can contain old/promotional links
         story_links = story_links[:30]
@@ -2167,15 +2149,19 @@ def scrape_news():
 
         return
 
-    def krqe(news_source):
+
+
+    def joemonahan(news_source):
         """
-        ###############################################
-        # Scrape "KRQE Local Reporting You Can Trust"
-        # RSS version
-        ###############################################
+        Joe Monahan:
+        Blogger RSS for article discovery.
+        Article HTML for high-quality images.
         """
 
-        feed_url = "https://www.krqe.com/feed/"
+        feed_url = (
+            "https://joemonahansnewmexico.blogspot.com/"
+            "feeds/posts/default?alt=rss&max-results=30"
+        )
 
         try:
             response = requests.get(
@@ -2183,132 +2169,83 @@ def scrape_news():
                 headers={"User-Agent": "Mozilla/5.0"},
                 timeout=20,
             )
-
             response.raise_for_status()
 
         except requests.RequestException as e:
-            print(f"KRQE RSS request failed: {e}")
+            write_error_log(
+                f"Joe Monahan feed request failed: {e}"
+            )
             return
 
         feed = feedparser.parse(response.content)
 
-        print(f"KRQE RSS entries: {len(feed.entries)}")
+        print(
+            f"Joe Monahan feed returned "
+            f"{len(feed.entries)} entries"
+        )
 
         for entry in feed.entries:
 
             title = getattr(entry, "title", "").strip()
-
             url = getattr(entry, "link", "").strip()
 
-            author = getattr(entry, "author", "")
+            if not title or not url:
+                continue
 
+            # Body
             body = ""
 
             if hasattr(entry, "summary"):
                 body = BeautifulSoup(
                     entry.summary,
                     "html.parser"
-                ).text.strip()
+                ).get_text(
+                    " ",
+                    strip=True
+                )
 
+            author = "Joe Monahan"
+
+            # Published date
             published = ""
 
             if hasattr(entry, "published"):
                 try:
-                    published_dt = parse(entry.published)
-
-                    published = published_dt.strftime(
+                    published = parse(
+                        entry.published
+                    ).strftime(
                         "%Y-%m-%dT%H:%M:%S"
                     )
-
-                except Exception as e:
-                    print(
-                        f"KRQE date error "
-                        f"{entry.published!r}: {e}"
-                    )
+                except Exception:
+                    published = ""
 
             if not published:
                 continue
 
             updated = ""
 
-            if hasattr(entry, "updated"):
-                try:
-                    updated_dt = parse(entry.updated)
-
-                    updated = updated_dt.strftime(
-                        "%Y-%m-%dT%H:%M:%S"
-                    )
-
-                except Exception:
-                    updated = ""
-
+            # Get higher-quality image from article page
             img = ""
 
-            # 1. media:content
-            if hasattr(entry, "media_content"):
-                for media in entry.media_content:
-                    candidate = media.get("url", "")
-                    if candidate:
-                        img = candidate
-                        break
+            news_soup = get_soup(url)
 
-            # 2. media:thumbnail
-            if not img and hasattr(entry, "media_thumbnail"):
-                for media in entry.media_thumbnail:
-                    candidate = media.get("url", "")
-                    if candidate:
-                        img = candidate
-                        break
+            if news_soup:
 
-            # 3. RSS enclosure
-            if not img and hasattr(entry, "enclosures"):
-                for enclosure in entry.enclosures:
-                    candidate = enclosure.get("href", "")
-                    media_type = enclosure.get("type", "")
-
-                    if candidate and media_type.startswith("image/"):
-                        img = candidate
-                        break
-
-            # 4. Search the summary HTML
-            if not img and hasattr(entry, "summary"):
-                summary_soup = BeautifulSoup(
-                    entry.summary,
-                    "html.parser"
+                # Prefer image inside Joe's actual post
+                post = news_soup.find(
+                    "div",
+                    class_="blogPost"
                 )
 
-                img_tag = summary_soup.find("img")
+                if post:
+                    img = get_img(post)
 
-                if img_tag:
-                    img = (
-                            img_tag.get("src")
-                            or img_tag.get("data-src")
-                            or img_tag.get("data-lazy-src")
-                            or ""
+                # Fallback to OpenGraph
+                if not img:
+                    img = get_meta(
+                        news_soup,
+                        {"property": "og:image"}
                     )
-
-            # 5. Search full RSS content HTML
-            if not img and hasattr(entry, "content"):
-                for content_item in entry.content:
-                    content_html = content_item.get("value", "")
-
-                    content_soup = BeautifulSoup(
-                        content_html,
-                        "html.parser"
-                    )
-
-                    img_tag = content_soup.find("img")
-
-                    if img_tag:
-                        img = (
-                                img_tag.get("src")
-                                or img_tag.get("data-src")
-                                or img_tag.get("data-lazy-src")
-                                or ""
-                        )
-
-                        if img:
-                            break
 
             add_article(
                 title,
@@ -2322,218 +2259,113 @@ def scrape_news():
 
         return
 
-    def kob(news_source):
-        """
-          ###############################################
-          # Scrape "KOB 4"
-          ###############################################
-          """
-        tags = get_tags(news_source.feed_url, 'div', class_name=re.compile("^hbi2020"))
-        if not tags:
-            return
-        for tag in tags:
-            h_tag = tag.find_next(re.compile("^h"))
-            if h_tag:
-                title = h_tag.text
-            else:
-                title = ""
-
-            a_tag = tag.find('a')
-            if a_tag:
-                url = a_tag.attrs['href']
-            else:
-                url = ""
-
-            img = get_value(tag, 'img', attr='data-src')
-
-            news_soup = get_soup(url)
-            if not news_soup:
-                continue
-
-            meta_tag = news_soup.find('meta', attrs={'name': 'author'})
-            if meta_tag:
-                author = meta_tag.attrs['content']
-            else:
-                author = ""
-
-            bd_tag = news_soup.find('meta', property="og:description")
-            if bd_tag:
-                body = bd_tag.attrs['content']
-            else:
-                body = ""
-
-            dt_tag = news_soup.find('meta', property="article:published_time")
-            if dt_tag:
-                published = parse(dt_tag.attrs['content'])
-                published = published.strftime("%Y-%m-%dT%H:%M:%S")
-            else:
-                published = ""
-
-            dt_tag = news_soup.find('meta', property="article:modified_time")
-            if dt_tag:
-                updated = parse(dt_tag.attrs['content'])
-                updated = updated.strftime("%Y-%m-%dT%H:%M:%S")
-            else:
-                updated = ""
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
-
-    def searchlightnm(news_source):
-        """
-          ###############################################
-          # Scrape "Searchlight NM"
-          ###############################################
-          """
-        tags = get_tags(news_source.feed_url, 'article', class_name=re.compile("type-post"))
-        if not tags:
-            return
-        # news_soup = get_soup(news_source.feed_url)
-        # if not news_soup:
-        #     return
-        # tags = news_soup.find_all('article', class_='type-post')
-        # if not tags:
-        #     write_error_log(f"News source {news_source.feed_url} returned no results.")
-        #     return
-        for tag in tags:
-            title = get_value(tag, re.compile('^h'), 'entry-title')
-
-            url = get_value(tag, 'a', attr='href')
-
-            img = get_value(tag, 'img', re.compile('^wp-post'), 'src', False)
-
-            # news_soup = get_soup(url)
-
-            author = get_value(tag, 'span', 'author')
-
-            body = ""
-
-            # news_soup = get_soup(url)
-            published = get_date(tag, 'time', 'published')
-
-            updated = get_date(tag, 'time', 'updated')
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
-
-    def corrales_comment(news_source):
-        """
-          ###############################################
-          # Scrape "Corrales Comment"
-          ###############################################
-          """
-        tags = get_tags(news_source.feed_url, 'article', class_name=re.compile("type-post"))
-        if not tags:
-            return
-        for tag in tags:
-            title = get_text(tag, 'h2')
-
-            url = get_value(tag, 'a', attr='href')
-
-            img = get_value(tag, 'img', re.compile('^wp-post'), 'src', False)
-
-            author = get_value(tag, 'span', 'author')
-
-            body = get_text(tag, 'p')
-
-            news_soup = get_soup(url)
-
-            published = get_date(news_soup, 'meta', property="article:published_time")
-
-            updated = get_date(news_soup, 'meta', property="article:modified_time")
-
-            add_article(title, body, author, published, updated, url, img)
-
-        return
 
     """ 
+    =================================================================================================================
     Main loop. Scrape news from model of published sources and execute function to scrape. Sort dictionary containing 
     news articles and output to json file. This function runs using http://burquebro.com/news/update or by cron 
     job that runs every hour.
+    =================================================================================================================
     """
     SCRAPERS = {
         "abqjournal": abqjournal,
-        "citydesk": citydesk,
-        "thepaper": thepaper,
-        "joemonahan": joemonahan,
-        "newmexican": newmexican,
-        "riograndesun": riograndesun,
-        "lascrucessun": lascrucessun,
-        "hobbssun": hobbssun,
-        "taosnews": taosnews,
-        "gallupsun": gallupsun,
-        "artesia_news": artesia_news,
-        "newmexicosun": newmexicosun,
-        "pinonpost": pinonpost,
-        "lasvegasoptic": lasvegasoptic,
-        "roswelldaily": roswelldaily,
-        "farmingtondaily": farmingtondaily,
-        "eastern_nm_news": eastern_nm_news,
         "defensor_chieftain": defensor_chieftain,
-        "la_daily_post": la_daily_post,
-        "sc_daily_press": sc_daily_press,
-        "nm_political_report": nm_political_report,
-        "alamagordo_daily": alamagordo_daily,
-        "ruidoso_news": ruidoso_news,
-        "abq_raw": abq_raw,
-        "valencia_county": valencia_county,
-        "the_independent": the_independent,
-        "cebola_citizen": cebola_citizen,
-        "roosevelt_review": roosevelt_review,
-        "current_argus": current_argus,
         "deming_headlight": deming_headlight,
-        "rio_rancho_observer": rio_rancho_observer,
-        "source_nm": source_nm,
+        "joemonahan": joemonahan,
         "koat": koat,
-        "krqe": krqe,
-        "kob": kob,
-        "searchlightnm": searchlightnm,
-        "corrales_comment": corrales_comment,
+        "ladailypost": la_daily_post,
+        "lascrucessun": lascrucessun,
+        "lasvegasoptic": lasvegasoptic,
+        "newmexican": newmexican,
+        "newmexicosun": newmexicosun,
+        "rio_rancho_observer": rio_rancho_observer,
+        "roosevelt_review": roosevelt_review,
+        "roswelldaily": roswelldaily,
+        "taosnews": taosnews,
+        "valencia_county": valencia_county,
     }
 
     news = []
     news_list = News.objects.filter(published=True)
 
     for news_source in news_list:
-        function_name = (news_source.function or "").strip()
-
-        # Support old database values such as "abqjournal()".
-        if function_name.endswith("()"):
-            function_name = function_name[:-2].strip()
-
-        scraper = SCRAPERS.get(function_name)
-
-        if scraper is None:
-            write_error_log(
-                f"No scraper registered for source='{news_source.title}', "
-                f"function={news_source.function!r}, "
-                f"normalized={function_name!r}"
-            )
-            continue
 
         article_count_before = len(news)
+        source_start = time.time()
 
         try:
-            scraper(news_source)
+            if news_source.scrape_type == News.SCRAPE_RSS:
+                scrape_rss(news_source)
+
+            elif news_source.scrape_type == News.SCRAPE_WORDPRESS:
+                scrape_wordpress_api(news_source)
+
+            elif news_source.scrape_type == News.SCRAPE_HTML:
+
+                function_name = (
+                        news_source.function or ""
+                ).strip()
+
+                if function_name.endswith("()"):
+                    function_name = function_name[:-2].strip()
+
+                scraper = SCRAPERS.get(function_name)
+
+                if scraper is None:
+                    write_error_log(
+                        f"No HTML scraper registered for "
+                        f"source='{news_source.title}', "
+                        f"function={news_source.function!r}"
+                    )
+                    continue
+
+                scraper(news_source)
+
+            else:
+                write_error_log(
+                    f"Unknown scrape_type "
+                    f"{news_source.scrape_type!r} "
+                    f"for {news_source.title}"
+                )
+                continue
+
         except Exception as e:
-            write_error_log(
-                f"Error processing source='{news_source.title}', "
-                f"function='{function_name}': "
+            elapsed = time.time() - source_start
+
+            print(
+                f"{news_source.title:<32} "
+                f"{'ERROR':>14} "
+                f"{elapsed:>7.1f}s "
                 f"{type(e).__name__}: {e}"
             )
+
+            write_error_log(
+                f"Error processing source='{news_source.title}', "
+                f"type='{news_source.scrape_type}': "
+                f"{type(e).__name__}: {e}"
+            )
+
             continue
 
         articles_added = len(news) - article_count_before
+        elapsed = time.time() - source_start
 
         if articles_added == 0:
+            status = "NO ARTICLES"
+
             write_error_log(
                 f"Scraper completed but added no articles: "
                 f"source='{news_source.title}', "
-                f"function='{function_name}'"
+                f"type='{news_source.scrape_type}'"
             )
+        else:
+            status = f"{articles_added} articles"
 
+        print(
+            f"{news_source.title:<32} "
+            f"{status:>14} "
+            f"{elapsed:>7.1f}s"
+        )
     # Remove duplicate entries
     news = remove_duplicates(news)
 

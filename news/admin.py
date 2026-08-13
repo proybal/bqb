@@ -1,20 +1,23 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.shortcuts import redirect
 from django.utils import timezone
+from django.template.response import TemplateResponse
+from django.urls import path
+from django.conf import settings
+
 import json
 import os
 from collections import Counter
+
 from .forms import NewsForm
 from .models import Cities, Counties, News, Region, ScrapeJob
-from django.conf import settings
-from django.contrib import admin
-from django.template.response import TemplateResponse
-from django.urls import path
 
 
 # Django Admin branding
 admin.site.site_header = "BurqueBro Administration"
 admin.site.site_title = "BurqueBro Admin"
 admin.site.index_title = "BurqueBro Site Management"
+
 
 def article_counts_view(request):
     json_path = os.path.join(settings.BQB_URL, "news.json")
@@ -67,12 +70,53 @@ def article_counts_view(request):
         context,
     )
 
+
+def submit_scrape_job_view(request):
+    active_job = ScrapeJob.objects.filter(
+        status__in=(
+            ScrapeJob.STATUS_QUEUED,
+            ScrapeJob.STATUS_RUNNING,
+        )
+    ).first()
+
+    if active_job:
+        messages.info(
+            request,
+            f"Scrape job {active_job.pk} is already {active_job.status}.",
+        )
+    else:
+        job = ScrapeJob.objects.create(
+            requested_by=request.user,
+            source="admin",
+        )
+
+        messages.success(
+            request,
+            f"Scrape job {job.pk} was queued.",
+        )
+
+    return redirect("/admin/news/scrapejob/")
+
+
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
     form = NewsForm
-    list_display = ("title", "city", "county", "region", "function", "published")
+
+    list_display = (
+        "title",
+        "city",
+        "county",
+        "region",
+        "scrape_type",
+        "published",
+    )
+
     ordering = ("title",)
-    actions = ("set_published_true", "set_published_false")
+
+    actions = (
+        "set_published_true",
+        "set_published_false",
+    )
 
     @admin.action(description="Publish selected news")
     def set_published_true(self, request, queryset):
@@ -123,7 +167,7 @@ class ScrapeJobAdmin(admin.ModelAdmin):
     search_fields = (
         "source",
         "requested_by__username",
-        "error_message",
+        "message",
     )
 
     ordering = ("-created_at",)
@@ -149,20 +193,29 @@ class ScrapeJobAdmin(admin.ModelAdmin):
 
         return f"{seconds}s"
 
-# Add Article Counts custom page to Django Admin URLs
-_original_get_urls = admin.site.get_urls
+_original_get_app_list = admin.site.get_app_list
 
 
-def get_admin_urls():
-    custom_urls = [
-        path(
-            "article-counts/",
-            admin.site.admin_view(article_counts_view),
-            name="article-counts",
-        ),
-    ]
+def custom_get_app_list(request):
+    app_list = _original_get_app_list(request)
 
-    return custom_urls + _original_get_urls()
+    for app in app_list:
+        if app["app_label"] == "news":
+            app["models"].append({
+                "name": "Submit Scrape Job",
+                "object_name": "SubmitScrapeJob",
+                "perms": {
+                    "add": False,
+                    "change": True,
+                    "delete": False,
+                    "view": True,
+                },
+                "admin_url": "/admin/submit-scrape-job/",
+                "add_url": None,
+                "view_only": True,
+            })
+
+    return app_list
 
 
-admin.site.get_urls = get_admin_urls
+admin.site.get_app_list = custom_get_app_list
