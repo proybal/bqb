@@ -1,0 +1,22 @@
+{% load i18n %}
+
+<nav class="sticky" id="nav-sidebar">
+    <input type="search"
+           id="nav-filter"
+           placeholder="{% translate 'Start typing to filter...' %}"
+           aria-label="{% translate 'Filter navigation items' %}">
+
+    <div style="padding: 10px 15px;">
+        <a href="{% url 'submit-scrape-job' %}">
+            <strong>Submit Scrape Job</strong>
+        </a>
+    </div>
+
+    <div style="padding: 10px 15px;">
+        <a href="{% url 'article-counts' %}">
+            <strong>Article Counts by News Source</strong>
+        </a>
+    </div>
+
+    {% include 'admin/app_list.html' with app_list=available_apps show_changelinks=False %}
+</nav>

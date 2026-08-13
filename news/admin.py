@@ -12,7 +12,6 @@ from collections import Counter
 from .forms import NewsForm
 from .models import Cities, Counties, News, Region, ScrapeJob
 
-
 # Django Admin branding
 admin.site.site_header = "BurqueBro Administration"
 admin.site.site_title = "BurqueBro Admin"
@@ -132,17 +131,26 @@ class CitiesAdmin(admin.ModelAdmin):
     list_display = ("name", "county")
     ordering = ("name",)
 
+    def get_model_perms(self, request):
+        return {}
+
 
 @admin.register(Counties)
 class CountiesAdmin(admin.ModelAdmin):
     list_display = ("name",)
     ordering = ("name",)
 
+    def get_model_perms(self, request):
+        return {}
+
 
 @admin.register(Region)
 class RegionAdmin(admin.ModelAdmin):
     list_display = ("name",)
     ordering = ("name",)
+
+    def get_model_perms(self, request):
+        return {}
 
 
 @admin.register(ScrapeJob)
@@ -193,6 +201,7 @@ class ScrapeJobAdmin(admin.ModelAdmin):
 
         return f"{seconds}s"
 
+
 _original_get_app_list = admin.site.get_app_list
 
 
@@ -201,6 +210,7 @@ def custom_get_app_list(request):
 
     for app in app_list:
         if app["app_label"] == "news":
+
             app["models"].append({
                 "name": "Submit Scrape Job",
                 "object_name": "SubmitScrapeJob",
@@ -215,7 +225,20 @@ def custom_get_app_list(request):
                 "view_only": True,
             })
 
-    return app_list
+            app["models"].append({
+                "name": "Article Counts by News Source",
+                "object_name": "ArticleCounts",
+                "perms": {
+                    "add": False,
+                    "change": True,
+                    "delete": False,
+                    "view": True,
+                },
+                "admin_url": "/admin/article-counts/",
+                "add_url": None,
+                "view_only": True,
+            })
 
+    return app_list
 
 admin.site.get_app_list = custom_get_app_list
