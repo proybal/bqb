@@ -144,8 +144,8 @@ class Region(models.Model):
 
 
 class News(models.Model):
-    source = models.URLField()
     title = models.CharField(max_length=50)
+    source = models.URLField()
     cover = models.ImageField(upload_to='images/')
     feed_url = models.URLField()
     city = models.ForeignKey(Cities, null=True, on_delete=models.SET_NULL)
