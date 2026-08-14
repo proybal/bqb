@@ -41,3 +41,13 @@ jobs:
 
             mkdir -p static/images staticfiles
             python manage.py collectstatic --noinput
+
+      - name: Restart BurqueBro services
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_ROOT_USERNAME }}
+          key: ${{ secrets.VPS_ROOT_SSH_KEY }}
+          port: 22
+          script: |
+            echo "Restarting BurqueBro services..."

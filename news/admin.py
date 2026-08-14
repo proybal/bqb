@@ -105,9 +105,18 @@ class NewsAdmin(admin.ModelAdmin):
         "title",
         "city",
         "county",
+        "state",
         "region",
         "scrape_type",
         "published",
+    )
+
+    search_fields = (
+        "title",
+        "code",
+        "city__name",
+        "county__name",
+        "state",
     )
 
     ordering = ("title",)
