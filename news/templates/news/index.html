@@ -174,7 +174,6 @@
 {% endblock script %}
 
 {% block head %}
-    <title>Best Source for New Mexico News | {{ category }} News</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <meta name="description"
           content="Stay updated with the latest news from New Mexico. Our news aggregator brings you top headlines, breaking stories, and in-depth coverage from across the state.">
@@ -187,8 +186,6 @@
 {% endblock title %}
 
 {% block body %}
-
-    {% include 'news/navbar.html' %}
 
     {% if messages %}
         <div class="alert alert-primary d-flex align-items-center p-1" role="alert">

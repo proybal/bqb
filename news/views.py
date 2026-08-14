@@ -17,7 +17,7 @@ from django.http import JsonResponse
 from .functions import *
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
-
+from django.shortcuts import get_object_or_404
 from .models import PushSubscription
 from .models import News, ScrapeJob
 from .push import send_push_to_all
@@ -329,8 +329,60 @@ def by_county(req, county):
     return render(req, 'news/index.html', {'category': county, 'news': news})
 
 
-def scrape_news():
+def sources(request):
+    news_sources = (
+        News.objects
+        .filter(published=True)
+        .select_related("city", "county", "region")
+        .order_by("state", "title")
+    )
 
+    return render(
+        request,
+        "news/sources.html",
+        {
+            "news_sources": news_sources,
+        },
+    )
+
+
+def by_source(request, code):
+    news_source = get_object_or_404(
+        News,
+        code=code,
+        published=True,
+    )
+
+    write_access_log(
+        request,
+        news_source.title,
+    )
+
+    with open("news.json", encoding="utf-8") as json_file:
+        news = json.load(json_file)
+
+    source_news = [
+        article
+        for article in news
+        if article.get("code") == news_source.code
+    ]
+
+    # Do NOT diversify a single-source page.
+    news = truncate_news_body(source_news)
+
+
+    return render(
+        request,
+        "news/index.html",
+        {
+            "category": news_source.title,
+            "news": news,
+            "news_source": news_source,
+        },
+    )
+
+
+def scrape_news():
     def scrape_rss(news_source):
         """
         Generic RSS scraper.
@@ -351,8 +403,6 @@ def scrape_news():
                 f"{news_source.title} RSS request failed: {e}"
             )
             return
-
-
 
         feed = feedparser.parse(response.content)
 
@@ -548,6 +598,7 @@ def scrape_news():
                 url,
                 img,
             )
+
     def scrape_wordpress_api(news_source, api_url=None):
         if api_url is None:
             api_url = news_source.feed_url
@@ -741,7 +792,6 @@ def scrape_news():
 
         return img
 
-
     def add_article(title, body, author, published, updated, url, img):
         if not published:
             write_error_log(f"News source {news_source.feed_url} has no published date.")
@@ -765,15 +815,26 @@ def scrape_news():
 
         published = published.strftime("%Y-%m-%dT%H:%M:%S")
 
-        last_update = published
         if updated:
             last_update = updated
-        news_dict = {'source': str(news_source.title), 'source_url': str(news_source.source), 'title': title,
-                     'body': body, 'author': author,
-                     'published': published, 'region': str(news_source.region), 'city': str(news_source.city),
-                     'county': str(news_source.county),
-                     'updated': updated, 'last_update': last_update, 'url': url, 'img': img,
-                     'thumbnail': str(news_source.cover)}
+        last_update = published
+
+        news_dict = {
+            'source': str(news_source.title),
+            'source_url': str(news_source.source),
+            'title': title,
+            'body': body,
+            'author': author,
+            'published': published,
+            'region': str(news_source.region),
+            'city': str(news_source.city),
+            'county': str(news_source.county),
+            'updated': updated,
+            'last_update': last_update,
+            'url': url,
+            'img': img,
+            'thumbnail': str(news_source.cover),
+            'code': news_source.code, }
         news.append(news_dict)
         return
 
@@ -860,7 +921,6 @@ def scrape_news():
 
         return
 
-
     def newmexican(news_source):
         """
         ###############################################
@@ -896,7 +956,6 @@ def scrape_news():
 
         return
 
-
     def lascrucessun(news_source):
         """
         ###############################################
@@ -924,7 +983,6 @@ def scrape_news():
             response.text,
             "html.parser"
         )
-
 
         story_urls = set()
         article_count = 0
@@ -1082,8 +1140,6 @@ def scrape_news():
 
         return
 
-
-
     def taosnews(news_source):
         """
         ###############################################
@@ -1122,8 +1178,6 @@ def scrape_news():
             add_article(title, body, author, published, updated, url, img)
 
         return
-
-
 
     def newmexicosun(news_source):
         """
@@ -1326,7 +1380,6 @@ def scrape_news():
 
         return
 
-
     def lasvegasoptic(news_source):
         """
         ###############################################
@@ -1388,8 +1441,6 @@ def scrape_news():
             add_article(title, body, author, published, updated, url, img)
 
         return
-
-
 
     def defensor_chieftain(news_source):
         """
@@ -1567,8 +1618,6 @@ def scrape_news():
 
         return
 
-
-
     def valencia_county(news_source):
         """
         ###############################################
@@ -1614,7 +1663,6 @@ def scrape_news():
 
         return
 
-
     def roosevelt_review(news_source):
         """
         ###############################################
@@ -1642,7 +1690,6 @@ def scrape_news():
             add_article(title, body, author, published, updated, url, img)
 
         return
-
 
     def deming_headlight(news_source):
         """
@@ -1958,7 +2005,6 @@ def scrape_news():
                 "url": url,
             })
 
-
         # Keep this reasonable -- homepage can contain old/promotional links
         story_links = story_links[:30]
 
@@ -2155,8 +2201,6 @@ def scrape_news():
 
         return
 
-
-
     def joemonahan(news_source):
         """
         Joe Monahan:
@@ -2264,7 +2308,6 @@ def scrape_news():
             )
 
         return
-
 
     """ 
     =================================================================================================================
@@ -2385,7 +2428,7 @@ def scrape_news():
         article['city'] = article['city'].replace(" ", "_")
         article['county'] = article['county'].replace(" ", "_")
 
-     # Format datetime objects as strings in the desired format
+    # Format datetime objects as strings in the desired format
     for item in news:
         original_date_string = item['published']
         original_date = datetime.strptime(original_date_string, "%Y-%m-%dT%H:%M:%S")

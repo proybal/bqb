@@ -13,8 +13,16 @@ urlpatterns = [
     path('news/update/', views.news_update, name="news-update"),
     path('news/signup/', signup_view, name="signup"),
     path('news/activate/<slug:uidb64>/<slug:token>/', activate, name='activate'),
-    # news/urls.py
-
+    path(
+        "news/sources/",
+        views.sources,
+        name="sources",
+    ),
+    path(
+        "news/source/<str:code>/",
+        views.by_source,
+        name="by_source",
+    ),
     path(
         "push/public-key/",
         views.push_public_key,

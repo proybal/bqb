@@ -1,0 +1,61 @@
+{% extends "news/base.html" %}
+
+{% block title %}
+News Sources | BurqueBro
+{% endblock title %}
+
+{% block body %}
+
+<div class="container">
+
+    <h1 class="mb-4">News Sources</h1>
+
+    <div class="row">
+
+        {% for source in news_sources %}
+
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+
+            <a href="{% url 'by_source' source.code %}"
+               class="text-decoration-none">
+
+                <div class="card h-100">
+
+                    {% if source.cover %}
+                    <img
+                        src="{{ source.cover.url }}"
+                        class="card-img-top"
+                        alt="{{ source.title }}"
+                        style="height: 120px; object-fit: contain; padding: 10px;">
+                    {% endif %}
+
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            {{ source.title }}
+                        </h5>
+
+                        <p class="card-text text-muted">
+                            {% if source.city %}
+                                {{ source.city }}
+                            {% endif %}
+
+                            {% if source.state %}
+                                {% if source.city %}, {% endif %}
+                                {{ source.state }}
+                            {% endif %}
+                        </p>
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock body %}

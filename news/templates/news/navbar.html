@@ -92,6 +92,12 @@
                     <a class="resetSearch nav-link text-white h4 bg-transparent p-4"
                        href="{% url 'by_region' 'Politics' %}">Politics</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white h4 bg-transparent p-4"
+                       href="{% url 'sources' %}">
+                        Sources
+                    </a>
+                </li>
                 <li class="nav-item text-white">
                     <a class="nav-link text-white h4 px-5" href="#" data-toggle="modal"
                        data-target="#myModal2">About</a>
@@ -147,7 +153,8 @@
                         </li>
                         <!-- Admin -->
                         <li class="nav-item mx-2">
-                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin" title="Site Administration" aria-label="Site Administration">
+                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin"
+                               title="Site Administration" aria-label="Site Administration">
                                 <span class="glyphicon glyphicon-cog align-bottom"
                                       style="color: white; font-size: 18px"></span>
                             </a>
@@ -189,7 +196,8 @@
                     <li class="nav-item">
                         <a class="nav-link text-white bg-transparent px-2 mt-2"
                            href="{% url 'login' %}">
-                            <span class="glyphicon glyphicon-log-in align-bottom" style="color: white; font-size: 20px"></span>
+                            <span class="glyphicon glyphicon-log-in align-bottom"
+                                  style="color: white; font-size: 20px"></span>
                         </a>
                     </li>
                 {% endif %}
