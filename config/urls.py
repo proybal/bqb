@@ -58,7 +58,6 @@ urlpatterns = [
         name="activate",
     ),
 
- #   path("", include("pages.urls")),
     path("", include("news.urls")),
 ]
 

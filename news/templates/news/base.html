@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 {% load static %}
-{% load wallpaper %}
 
 <html lang="en">
 
@@ -70,18 +69,6 @@
 
 <body>
 
-{% random_wallpaper as wallpaper %}
-
-{% if wallpaper %}
-<style>
-    body {
-        background-image: url("{% get_media_prefix %}{{ wallpaper.image }}");
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-attachment: fixed;
-    }
-</style>
-{% endif %}
 
 {% block body %}
 {% endblock body %}
