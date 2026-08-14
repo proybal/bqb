@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 os.environ.setdefault(
     "DJANGO_SETTINGS_MODULE",
-    "bqb.settings"
+    "config.settings"
 )
 
 django.setup()

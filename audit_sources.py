@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 
 os.environ.setdefault(
     "DJANGO_SETTINGS_MODULE",
-    "bqb.settings"
+    "config.settings"
 )
 
 django.setup()
