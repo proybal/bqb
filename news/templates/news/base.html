@@ -12,11 +12,7 @@
     <meta name="description"
           content="New Mexico News Aggregator">
 
-    <title>
-        {% block title %}
-        BurqueBro
-        {% endblock title %}
-    </title>
+    <title>{% block title %}New Mexico News | BurqueBro{% endblock %}</title>
 
     <!-- PWA -->
     <link rel="manifest" href="{% url 'manifest' %}">
@@ -80,7 +76,7 @@
 {% endblock script %}
 
 {% if user.is_authenticated %}
-<script src="{% static 'news/js/push.js' %}?v=7"></script>
+    <script src="{% static 'news/js/push.js' %}?v=7"></script>
 {% endif %}
 
 
@@ -106,12 +102,12 @@
 </script>
 <script>
     const tooltipTriggerList = [].slice.call(
-    document.querySelectorAll('[data-bs-toggle="tooltip"]')
-);
+        document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
 
     tooltipTriggerList.forEach(function (tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl);
-});
+    });
 </script>
 </body>
 </html>
