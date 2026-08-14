@@ -59,7 +59,6 @@ urlpatterns = [
     ),
 
     path("", include("pages.urls")),
-    path("", include("slideshow.urls")),
     path("", include("news.urls")),
 ]
 
