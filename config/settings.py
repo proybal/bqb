@@ -62,7 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'bqb.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
