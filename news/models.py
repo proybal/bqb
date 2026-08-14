@@ -148,9 +148,10 @@ class News(models.Model):
     source = models.URLField()
     cover = models.ImageField(upload_to='images/')
     feed_url = models.URLField()
-    city = models.ForeignKey(Cities, null=True, on_delete=models.SET_NULL)
-    county = models.ForeignKey(Counties, null=True, on_delete=models.SET_NULL)
     region = models.ForeignKey(Region, null=True, on_delete=models.SET_NULL)
+    county = models.ForeignKey(Counties, null=True, on_delete=models.SET_NULL)
+    city = models.ForeignKey(Cities, null=True, on_delete=models.SET_NULL)
+    state = models.CharField(max_length=2, default="NM")
     SCRAPE_HTML = "HTML"
     SCRAPE_RSS = "RSS"
     SCRAPE_WORDPRESS = "WORDPRESS_API"
