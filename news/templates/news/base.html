@@ -140,5 +140,81 @@
         new bootstrap.Tooltip(tooltipTriggerEl);
     });
 </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        if (window.innerWidth > 767) {
+            return;
+        }
+
+        const sections = [
+            "/news/",
+            "/news/by_city/Albuquerque/",
+            "/news/by_region/Politics/",
+            "/news/sources/"
+        ];
+        const currentPath = window.location.pathname;
+
+        let currentIndex = sections.findIndex(function (path) {
+            return currentPath === path;
+        });
+
+        if (currentIndex === -1) {
+            return;
+        }
+
+        let startX = 0;
+        let startY = 0;
+
+        document.addEventListener("touchstart", function (event) {
+            startX = event.changedTouches[0].clientX;
+            startY = event.changedTouches[0].clientY;
+        }, {passive: true});
+
+        document.addEventListener("touchend", function (event) {
+
+            const endX = event.changedTouches[0].clientX;
+            const endY = event.changedTouches[0].clientY;
+
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+
+            const minimumSwipe = 120;
+
+            // Ignore horizontal gestures.
+            // Those belong to article/source card paging.
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                return;
+            }
+
+            if (Math.abs(deltaY) < minimumSwipe) {
+                return;
+            }
+
+            // Swipe up -> next section
+            if (deltaY < 0) {
+
+                if (currentIndex < sections.length - 1) {
+                    window.location.href =
+                        sections[currentIndex + 1];
+                }
+
+            }
+
+            // Swipe down -> previous section
+            else {
+
+                if (currentIndex > 0) {
+                    window.location.href =
+                        sections[currentIndex - 1];
+                }
+
+            }
+        }, {passive: true});
+
+    });
+</script>
+
 </body>
 </html>
