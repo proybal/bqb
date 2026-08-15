@@ -93,6 +93,13 @@
 
 <body>
 
+<div id="mobile-section-nav"
+     data-nm="{% url 'state_news' %}"
+     data-abq="{% url 'by_city' 'Albuquerque' %}"
+     data-politics="{% url 'by_region' 'Politics' %}"
+     data-sources="{% url 'sources' %}">
+</div>
+
 {% include 'news/navbar.html' %}
 
 
@@ -213,7 +220,24 @@
             }
         }, {passive: true});
 
-    });
+        if (currentIndex === -1) {
+            return;
+        }
+
+        if (dy < 0) {
+            // Swipe up -> next section
+            currentIndex = (currentIndex + 1) % sections.length;
+        } else {
+            // Swipe down -> previous section
+            currentIndex =
+                (currentIndex - 1 + sections.length) % sections.length;
+        }
+
+        window.location.href = sections[currentIndex];
+    }, {passive: true});
+
+    })
+    ;
 </script>
 
 </body>
