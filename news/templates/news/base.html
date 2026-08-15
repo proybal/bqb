@@ -127,11 +127,11 @@
 
 <body>
 
-<div id="mobile-section-nav"
-     data-nm="{% url 'state_news' %}"
-     data-abq="{% url 'by_region' 'Albuquerque' %}"
-     data-politics="{% url 'by_region' 'Politics' %}"
-     data-sources="{% url 'sources' %}">
+<div class="mobile-section-nav">
+    <a href="{% url 'state_news' %}">NM News</a>
+    <a href="{% url 'by_city' 'Albuquerque' %}">Albuquerque</a>
+    <a href="{% url 'by_region' 'Politics' %}">Politics</a>
+    <a href="{% url 'sources' %}">Sources</a>
 </div>
 
 {% include 'news/navbar.html' %}
