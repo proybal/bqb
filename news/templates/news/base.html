@@ -62,32 +62,66 @@
     {% endblock style %}
     <style>
         /* Shared mobile horizontal swipe */
-        @media (max-width: 767px) {
+@media (max-width: 767px) {
 
-            .news-swipe-row {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                align-items: flex-start;
-            }
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
 
-            .news-swipe-row::-webkit-scrollbar {
-                display: none;
-            }
+    body {
+        font-size: 14px;
+    }
 
-            .news-swipe-card {
-                flex: 0 0 100%;
-                max-width: 100%;
-                scroll-snap-align: start;
-                scroll-snap-stop: always;
-                margin-bottom: 0 !important;
-                align-items: flex-start;
-            }
-        }
-    </style>
+    .news-title {
+        font-size: 16px;
+        line-height: 1.25;
+    }
+
+    .news-body {
+        font-size: 14px;
+        line-height: 1.35;
+    }
+
+    .news-swipe-row {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+        touch-action: pan-x;
+        scrollbar-width: none;
+    }
+
+    .news-swipe-row::-webkit-scrollbar {
+        display: none;
+    }
+
+    .news-swipe-card {
+        flex: 0 0 100%;
+        width: 100%;
+        max-width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+    }
+
+    .news-item {
+        width: 100%;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 12px !important;
+    }
+
+    .news-image {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+    }
+}    </style>
 </head>
 
 

@@ -1,7 +1,7 @@
 {% load static %}
 {% load custom_tags %}
+
 <style>
-    /* Your existing CSS styles here */
     .navbar-toggler {
         color: lightblue !important;
     }
@@ -14,7 +14,7 @@
     }
 
     .modal-p {
-        #color: steelblue;
+        color: steelblue;
     }
 
     .modal-footer {
@@ -26,145 +26,280 @@
         color: black;
     }
 
+    /* Mobile navigation hidden on desktop */
+    .mobile-brand,
+    .mobile-section-nav {
+        display: none;
+    }
+
+    @media (max-width: 767px) {
+
+        /* Hide entire desktop Bootstrap navbar */
+        .navbar {
+            display: none !important;
+        }
+
+        .mobile-brand {
+            display: block;
+            background: #0d6efd;
+            text-align: center;
+            padding: 7px;
+        }
+
+        .mobile-brand a {
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .mobile-section-nav {
+            display: flex;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            justify-content: space-around;
+            background: #212529;
+            padding: 8px 4px;
+        }
+
+        .mobile-section-nav a {
+            flex: 1;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            font-size: 13px;
+            padding: 6px 2px;
+            white-space: nowrap;
+        }
+    }
 </style>
 
+
+<!-- Desktop / Tablet Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-primary">
     <div class="container-fluid">
-        <a style="font-family: Sofia; font-style: italic; color: white; font-size: 24pt; text-shadow: 3px 3px 3px #ababab;"
+
+        <a style="font-family: Sofia;
+                  font-style: italic;
+                  color: white;
+                  font-size: 24pt;
+                  text-shadow: 3px 3px 3px #ababab;"
            class="navbar-brand"
            href="{% url 'home' %}">
             New Mexico News
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon" style="color: white"></span>
+
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Dropdown Menu -->
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="collapse navbar-collapse"
+             id="navbarSupportedContent">
+
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                <!-- Albuquerque -->
                 <li class="nav-item">
-                    <a class="nav-link active text-white h4 p-4" aria-current="page"
-                       href="{% url 'by_region' 'Albuquerque' %}">Albuquerque</a>
+                    <a class="nav-link active text-white h4 p-4"
+                       aria-current="page"
+                       href="{% url 'by_city' 'Albuquerque' %}">
+                        Albuquerque
+                    </a>
                 </li>
 
-                <!-- Services with Sub-Menus -->
+                <!-- Regions -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle text-white h4 ms-auto p-4" href="#" id="navbarDropdownServices"
+
+                    <a class="nav-link dropdown-toggle text-white h4 ms-auto p-4"
+                       href="#"
+                       id="navbarDropdownServices"
                        role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
                         Region
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownServices">
+
+                    <ul class="dropdown-menu"
+                        aria-labelledby="navbarDropdownServices">
+
                         <li>
                             <a class="resetSearch dropdown-item h4"
                                href="{% url 'by_region' 'Central' %}">
                                 Central
                             </a>
                         </li>
+
                         <li>
                             <a class="resetSearch dropdown-item h4"
                                href="{% url 'by_region' 'Northern' %}">
                                 Northern
                             </a>
                         </li>
+
                         <li>
                             <a class="resetSearch dropdown-item h4"
                                href="{% url 'by_region' 'Southern' %}">
                                 Southern
                             </a>
                         </li>
+
                         <li>
                             <a class="resetSearch dropdown-item h4"
                                href="{% url 'by_region' 'Eastern' %}">
                                 Eastern
                             </a>
                         </li>
+
                         <li>
                             <a class="resetSearch dropdown-item h4"
                                href="{% url 'by_region' 'Western' %}">
                                 Western
                             </a>
                         </li>
+
                     </ul>
                 </li>
+
+                <!-- Politics -->
                 <li class="nav-item">
                     <a class="resetSearch nav-link text-white h4 bg-transparent p-4"
-                       href="{% url 'by_region' 'Politics' %}">Politics</a>
+                       href="{% url 'by_region' 'Politics' %}">
+                        Politics
+                    </a>
                 </li>
+
+                <!-- Sources -->
                 <li class="nav-item">
                     <a class="nav-link text-white h4 bg-transparent p-4"
                        href="{% url 'sources' %}">
                         Sources
                     </a>
                 </li>
-                <li class="nav-item text-white">
-                    <a class="nav-link text-white h4 px-5" href="#" data-toggle="modal"
-                       data-target="#myModal2">About</a>
 
-                    <div id="myModal2" class="modal fade">
+                <!-- About -->
+                <li class="nav-item text-white">
+
+                    <a class="nav-link text-white h4 px-5"
+                       href="#"
+                       data-toggle="modal"
+                       data-target="#myModal2">
+                        About
+                    </a>
+
+                    <div id="myModal2"
+                         class="modal fade">
+
                         <div class="modal-dialog">
                             <div class="modal-content">
+
                                 <div class="modal-header">
                                     <h3>About</h3>
                                 </div>
+
                                 <div class="modal-body">
                                     {% get_about_message %}
                                 </div>
+
                             </div>
                         </div>
+
                     </div>
                 </li>
+
             </ul>
+
+
+            <!-- Right side -->
             <ul class="navbar-nav ms-auto">
 
                 <!-- Search -->
                 <li>
-                    <input type="hidden" id="searchBaseURL" value="{% url 'search' 'xxxxx' %}">
-                    <form id="searchForm" class="d-flex p-4" style="padding-right: 50em" role="search">
-                        <input id="searchInput" class="form-control me-2" type="search" name="search"
-                               placeholder="Search" aria-label="Search" style="width: 200px;">
-                        <button class="btn btn-outline-primary bg-white" type="submit">Search</button>
+                    <input type="hidden"
+                           id="searchBaseURL"
+                           value="{% url 'search' 'xxxxx' %}">
+
+                    <form id="searchForm"
+                          class="d-flex p-4"
+                          role="search">
+
+                        <input id="searchInput"
+                               class="form-control me-2"
+                               type="search"
+                               name="search"
+                               placeholder="Search"
+                               aria-label="Search"
+                               style="width: 200px;">
+
+                        <button class="btn btn-outline-primary bg-white"
+                                type="submit">
+                            Search
+                        </button>
+
                     </form>
                 </li>
+
+
                 {% if request.user.is_authenticated %}
+
                     {% if request.user.is_superuser %}
+
                         <!-- Update -->
                         <li class="nav-item mx-2 d-flex align-items-center">
+
                             <form method="post"
                                   action="{% url 'news-update' %}"
                                   class="d-flex align-items-center m-0">
+
                                 {% csrf_token %}
 
                                 <button type="submit"
                                         class="nav-link text-white bg-transparent border-0 px-2 py-0 m-0 d-flex align-items-center"
                                         style="cursor: pointer; line-height: 1;"
                                         data-bs-toggle="tooltip"
-                                        data-bs-custom-class="custom-tooltip"
-                                        data-bs-delay="1"
                                         data-bs-placement="bottom"
-                                        data-bs-title="Update News"
+                                        title="Update News"
                                         aria-label="Update News">
 
                                     <span class="glyphicon glyphicon-refresh"
-                                          style="color: white; font-size: 18px;"></span>
+                                          style="color: white;
+                                                 font-size: 18px;">
+                                    </span>
+
                                 </button>
+
                             </form>
                         </li>
+
+
                         <!-- Admin -->
                         <li class="nav-item mx-2">
-                            <a class="nav-link text-white bg-transparent px-2 mt-2" href="/admin"
-                               title="Site Administration" aria-label="Site Administration">
+
+                            <a class="nav-link text-white bg-transparent px-2 mt-2"
+                               href="/admin"
+                               title="Site Administration"
+                               aria-label="Site Administration">
+
                                 <span class="glyphicon glyphicon-cog align-bottom"
-                                      style="color: white; font-size: 18px"></span>
+                                      style="color: white;
+                                             font-size: 18px;">
+                                </span>
+
                             </a>
                         </li>
+
                     {% endif %}
+
 
                     <!-- Push Notifications -->
                     <li class="nav-item mx-2 d-flex align-items-center">
-                        <button
-                                id="pushToggle"
+
+                        <button id="pushToggle"
                                 type="button"
                                 class="nav-link bg-transparent border-0 px-2 py-0 m-0"
                                 style="display:block; color:white;"
@@ -173,80 +308,175 @@
                                 title="Enable Notifications">
 
                             <i id="pushIcon"
-                               class="fa-solid fa-bell-slash"></i>
+                               class="fa-solid fa-bell-slash">
+                            </i>
+
                         </button>
                     </li>
 
+
                     <!-- Logout -->
                     <li class="nav-item mx-2">
-                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="/logout">
+
+                        <a class="nav-link text-white bg-transparent px-2 mt-2"
+                           href="/logout">
+
                             <span class="glyphicon glyphicon-log-out align-bottom"
-                                  style="color: white; font-size: 18px"></span>
+                                  style="color: white;
+                                         font-size: 18px;">
+                            </span>
+
                         </a>
                     </li>
+
+
                 {% else %}
+
                     <!-- Signup -->
                     <li class="nav-item mx-2">
-                        <a class="nav-link text-white bg-transparent px-2 mt-2" href="/signup">
+
+                        <a class="nav-link text-white bg-transparent px-2 mt-2"
+                           href="/signup">
+
                             <span class="glyphicon glyphicon-user align-bottom"
-                                  style="color: white; font-size: 18px"></span>
+                                  style="color: white;
+                                         font-size: 18px;">
+                            </span>
+
                         </a>
                     </li>
+
+
                     <!-- Login -->
                     <li class="nav-item">
+
                         <a class="nav-link text-white bg-transparent px-2 mt-2"
                            href="{% url 'login' %}">
+
                             <span class="glyphicon glyphicon-log-in align-bottom"
-                                  style="color: white; font-size: 20px"></span>
+                                  style="color: white;
+                                         font-size: 20px;">
+                            </span>
+
                         </a>
                     </li>
+
                 {% endif %}
+
             </ul>
+
         </div>
     </div>
 </nav>
 
+
+<!-- Mobile Header -->
+<div class="mobile-brand">
+    <a href="{% url 'state_news' %}">
+        BurqueBro
+    </a>
+</div>
+
+
+<!-- Mobile Navigation -->
+<div class="mobile-section-nav">
+
+    <a href="{% url 'state_news' %}">
+        NM News
+    </a>
+
+    <a href="{% url 'by_city' 'Albuquerque' %}">
+        Albuquerque
+    </a>
+
+    <a href="{% url 'by_region' 'Politics' %}">
+        Politics
+    </a>
+
+    <a href="{% url 'sources' %}">
+        Sources
+    </a>
+
+</div>
+
+
 <script type="text/javascript">
 
-    document.getElementById("searchForm").addEventListener("submit", function (event) {
-        // Prevent default form submission behavior
-        event.preventDefault();
-        const baseURL = document.getElementById("searchBaseURL").value;
-        // Get the search term from the input field
-        const searchTerm = document.getElementById("searchInput").value;
-        // Construct the URL with the search term
-        if (searchTerm !== '') {
-            const searchURL = baseURL.replace("xxxxx", encodeURIComponent(searchTerm));
-            window.location.href = searchURL;
-        }
-    })
-    // Retrieve the input value from local storage when the page loads
-    window.onload = function () {
-        const storedValue = localStorage.getItem("searchInput");
-        if (storedValue) {
-            document.getElementById("searchInput").value = storedValue;
-        }
-    };
+    const searchForm = document.getElementById("searchForm");
 
-    // Store the input value in local storage when the input field changes
-    document.getElementById("searchInput").addEventListener("input", function () {
-        localStorage.setItem("searchInput", this.value);
-    });
-    // Reset the input field when any link with the 'resetSearch' class is clicked
-    const resetLinks = document.querySelectorAll(".resetSearch");
-    if (resetLinks) {
-        resetLinks.forEach(function (link) {
-            link.addEventListener("click", function (event) {
-                event.preventDefault(); // Prevent the default link behavior
-                // document.getElementById("searchInput").value = ''; // Reset the input field's value
-                // Handle navigation explicitly if necessary
-                const href = link.getAttribute("href");
-                if (href) {
-                    window.location.href = href; // Navigate to the URL specified in the href attribute
-                }
-                localStorage.setItem("searchInput", "");
+    if (searchForm) {
+
+        searchForm.addEventListener("submit", function (event) {
+
+            event.preventDefault();
+
+            const baseURL =
+                document.getElementById("searchBaseURL").value;
+
+            const searchTerm =
+                document.getElementById("searchInput").value;
+
+            if (searchTerm !== "") {
+
+                const searchURL =
+                    baseURL.replace(
+                        "xxxxx",
+                        encodeURIComponent(searchTerm)
+                    );
+
+                window.location.href = searchURL;
+            }
+        });
+
+
+        window.addEventListener("load", function () {
+
+            const storedValue =
+                localStorage.getItem("searchInput");
+
+            if (storedValue) {
+                document.getElementById("searchInput").value =
+                    storedValue;
+            }
+        });
+
+
+        document
+            .getElementById("searchInput")
+            .addEventListener("input", function () {
+
+                localStorage.setItem(
+                    "searchInput",
+                    this.value
+                );
             });
-        })
+
+
+        const resetLinks =
+            document.querySelectorAll(".resetSearch");
+
+        resetLinks.forEach(function (link) {
+
+            link.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    localStorage.setItem(
+                        "searchInput",
+                        ""
+                    );
+
+                    const href =
+                        link.getAttribute("href");
+
+                    if (href) {
+                        window.location.href = href;
+                    }
+                }
+            );
+        });
     }
-    ;
+
 </script>
