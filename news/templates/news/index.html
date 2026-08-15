@@ -45,17 +45,6 @@
         }
 
 
-        @media (max-width: 600px) {
-            .cards {
-                grid-template-columns: repeat(1, 1fr);
-                display: none;
-            }
-
-            .card {
-                display: none;
-            }
-        }
-
         @media (min-width: 576px) {
             .modal-dialog {
                 max-width: 400px;
@@ -97,6 +86,37 @@
             object-fit: cover;
         }
 
+
+        /* Mobile article swipe */
+@media (max-width: 767px) {
+
+    .news-swipe-row {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+
+        /* Hide scrollbar */
+        scrollbar-width: none;
+    }
+
+    .news-swipe-row::-webkit-scrollbar {
+        display: none;
+    }
+
+    .news-swipe-card {
+        flex: 0 0 100%;
+        max-width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        margin-bottom: 0 !important;
+    }
+
+    .news-item {
+        margin-top: 0;
+    }
+}
 
     </style>
 {% endblock style %}
@@ -204,9 +224,9 @@
     {% endif %}
     <div class="container-fluid px-4 px-lg-5">
         <div><h5 style="color: lightgray">{{ news|length }} Articles in {{ category }} News</h5></div>
-        <div class="row">
+        <div class="row news-swipe-row">
             {% for n in news %}
-                <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient">
+                <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient news-swipe-card">
                     <div class="news-item bg-body h-100 mx-auto p-3 rounded-5 d-flex flex-column">
                         <div class="news-title clearfix content-heading">
                             <span>
