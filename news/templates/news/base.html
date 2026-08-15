@@ -60,6 +60,32 @@
 
     {% block style %}
     {% endblock style %}
+    <style>
+        /* Shared mobile horizontal swipe */
+        @media (max-width: 767px) {
+
+            .news-swipe-row {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .news-swipe-row::-webkit-scrollbar {
+                display: none;
+            }
+
+            .news-swipe-card {
+                flex: 0 0 100%;
+                max-width: 100%;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+                margin-bottom: 0 !important;
+            }
+        }
+    </style>
 </head>
 
 

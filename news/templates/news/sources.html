@@ -10,11 +10,11 @@ News Sources | BurqueBro
 
     <h1 class="mb-4">News Sources</h1>
 
-    <div class="row">
+    <div class="row news-swipe-row">
 
         {% for source in news_sources %}
 
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 news-swipe-card">
 
             <a href="{% url 'by_source' source.code %}"
                class="text-decoration-none">
