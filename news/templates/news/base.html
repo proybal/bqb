@@ -101,18 +101,25 @@
                 padding: 0 8px 6px 14px;
             }
 
-            .news-swipe-row::-webkit-scrollbar {
-                display: none;
+            .news-swipe-row {
+                display: flex;
+                flex-wrap: nowrap;
+                align-items: flex-start;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+
+                gap: 0;
+                margin: 0 !important;
+                padding: 0 6px 6px 6px;
             }
 
             .news-swipe-card {
-                flex: 0 0 100%;
-                width: 100%;
-                max-width: 100%;
-
-
-                scroll-snap-align: center;
-                scroll-snap-stop: always;
+                flex: 0 0 calc(100% - 12px);
+                width: calc(100% - 12px);
+                max-width: calc(100% - 12px);
             }
 
             .news-item {
