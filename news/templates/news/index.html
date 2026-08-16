@@ -91,33 +91,28 @@
         @media (max-width: 767px) {
 
             .news-item {
-                height: 270px !important;
-                min-height: 270px !important;
-                max-height: 270px !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
 
-                padding: 3px 5px !important;
+                padding: 4px !important;
                 margin: 0 !important;
 
-                overflow: hidden;
+                background: transparent !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
             }
 
             .news-title {
-                font-size: 8px !important;
-                line-height: 1;
+                font-size: 10px !important;
+                line-height: 1.1;
                 padding: 0 !important;
-                margin: 0 !important;
+                margin: 1px 0 !important;
             }
 
             .news-title h5 {
-                font-size: 8px !important;
-                line-height: 1;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .news-title p {
-                font-size: 8px !important;
-                line-height: 1;
+                font-size: 9px !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -127,41 +122,36 @@
                 height: 22px !important;
                 max-width: 22px !important;
                 max-height: 22px !important;
-                margin: 0 3px 0 0 !important;
+                margin-right: 3px !important;
             }
 
             .news-image {
                 width: 100%;
-                height: 70px;
-                max-height: 70px;
+                height: 95px;
                 object-fit: cover;
-                aspect-ratio: auto;
+                margin: 2px 0;
             }
 
             .news-body {
-                font-size: 8px !important;
-                line-height: 1.1;
+                font-size: 9px !important;
+                line-height: 1.15;
                 margin: 2px 0 !important;
-                overflow: hidden;
-            }
-
-            .news-body p {
-                margin: 0 !important;
             }
 
             .news-published,
             .news-published p {
                 font-size: 7px !important;
                 line-height: 1;
-                margin: 1px !important;
+                margin: 1px 0 !important;
             }
 
             hr {
-                margin: 1px 0 !important;
+                margin: 2px 0 !important;
             }
         }
 
         .article-count {
+            display: none !important;
             color: lightgray;
         }
     </style>
@@ -273,7 +263,7 @@
         <div class="row news-swipe-row">
             {% for n in news %}
                 <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient news-swipe-card">
-                    <div class="news-item bg-body h-100 mx-auto p-3 rounded-5 d-flex flex-column">
+                    <div class="news-item d-flex flex-column">
                         <div class="news-title clearfix content-heading">
                             <span>
                                 <a href="{{ n.source_url }}">
@@ -326,10 +316,6 @@
         </div>
     </div>
     <div class="go-to-top" id="goToTopButton">&uarr;</div>
-    <h5 style="color: lightgray; font-size: small" href="mailto: proybal@yahoo.com">created by Paul Roybal</h5>
-
-    {#        <!-- Bootstrap Bundle with Popper -->#}
-    {#    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>#}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
