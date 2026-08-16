@@ -91,9 +91,14 @@
                 overflow-x: auto;
                 overflow-y: hidden;
                 scroll-snap-type: x mandatory;
-                overscroll-behavior-x: contain;
-                touch-action: pan-x;
+                -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
+
+                gap: 8px;
+                margin: 0 !important;
+
+                /* More space before first card */
+                padding: 0 8px 6px 14px;
             }
 
             .news-swipe-row::-webkit-scrollbar {
@@ -106,17 +111,17 @@
                 max-width: 85%;
 
                 padding: 5px !important;
-                margin: 5px  !important;
+                margin: 5px !important;
 
                 scroll-snap-align: center;
                 scroll-snap-stop: always;
             }
 
             .news-item {
-                width: 100%;
                 height: auto !important;
                 min-height: 0 !important;
-                padding: 12px !important;
+                padding: 3px 5px !important;
+                margin: 0 !important;
             }
 
             .news-image {
