@@ -80,42 +80,45 @@
             caret-color: transparent;
         }
 
-        .news-title img {
-            max-width: 70px;
-            max-height: 70px;
-            object-fit: cover;
-        }
 
         /* Mobile news cards */
 
         @media (max-width: 767px) {
 
-            .news-item {
-                display: block !important;
-                width: 100% !important;
-                max-width: 100% !important;
+            .source-thumbnail {
+                width: 24px !important;
+                height: 24px !important;
+                max-width: 24px !important;
+                max-height: 24px !important;
 
-                height: auto !important;
-                min-height: 0 !important;
-
-                margin: 0 !important;
-                padding: 4px !important;
-
-                background: transparent !important;
-                border: none !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
+                object-fit: cover;
+                margin: 0 4px 0 0 !important;
+                padding: 0 !important;
+                border: 1px solid #777;
             }
 
-            .news-image {
-                display: block;
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
+            .news-title {
+                font-size: 10px !important;
+                line-height: 1.1 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
 
-                margin: 2px 0 !important;
-                object-fit: cover;
-                border-radius: 0 !important;
+            .news-title h5 {
+                font-size: 9px !important;
+                line-height: 1 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .news-body {
+                font-size: 9px !important;
+                line-height: 1.15 !important;
+            }
+
+            .news-published,
+            .news-published p {
+                font-size: 7px !important;
             }
         }
 
@@ -230,7 +233,11 @@
         </div>
     {% endif %}
     <div class="container-fluid px-2 px-lg-5">
-        <div><h5 class="article-count">{{ news|length }} Articles in {{ category }} News</h5></div>
+        <div class="d-none d-md-block">
+            <h5 class="article-count">
+                {{ news|length }} Articles in {{ category }} News
+            </h5>
+        </div>
         <div class="row news-swipe-row">
             {% for n in news %}
                 <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient news-swipe-card">
@@ -238,12 +245,10 @@
                         <div class="news-title clearfix content-heading">
                             <span>
                                 <a href="{{ n.source_url }}">
-                                    <img style="margin-right: 5px; border-style: inset"
-                                         href="{{ n.source_url }}"
-                                         class="pull-left thumbnail rounded"
+                                    <img class="source-thumbnail pull-left rounded"
                                          src="{{ MEDIA_URL }}{{ n.thumbnail }}"
-                                         width="70vw" loading="lazy"
-                                         alt="{{ source.source }}">
+                                         loading="lazy"
+                                         alt="{{ n.source }}">
                                     <h5 class="m-1">{{ n.source }}</h5>
                                 </a>
                             </span>
