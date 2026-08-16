@@ -127,16 +127,7 @@
 
 <body>
 
-<div class="mobile-section-nav">
-    <a href="{% url 'state_news' %}">NM News</a>
-    <a href="{% url 'by_region' 'Albuquerque' %}">Albuquerque</a>
-    <a href="{% url 'by_region' 'Politics' %}">Politics</a>
-    <a href="{% url 'sources' %}">Sources</a>
-</div>
-
 {% include 'news/navbar.html' %}
-
-
 
 {% block body %}
 {% endblock body %}

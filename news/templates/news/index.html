@@ -89,55 +89,77 @@
         /* Mobile news cards */
         @media (max-width: 767px) {
 
-            .navbar {
-                display: none !important;
+            .news-item {
+                height: auto !important;
+                min-height: 0 !important;
+
+                margin: 0 !important;
+                padding: 7px !important;
+
+                border-radius: 6px !important;
             }
 
-            .mobile-brand {
-                display: block;
-                background: #0d6efd;
-                text-align: center;
-                padding: 3px 0;
+            .news-title {
+                font-size: 13px !important;
+                line-height: 1.15;
+                padding: 2px;
+                margin: 3px 0;
             }
 
-            .mobile-brand a {
-                color: white;
-                text-decoration: none;
-                font-size: 16px;
-                font-weight: 600;
+            .news-title h5 {
+                font-size: 11px !important;
+                line-height: 1.1;
+                margin: 1px !important;
+            }
+
+            .news-title img {
+                width: 30px !important;
+                height: 30px !important;
+                max-width: 30px !important;
+                max-height: 30px !important;
+                margin-right: 4px !important;
+            }
+
+            .news-body {
+                font-size: 11px !important;
                 line-height: 1.2;
+                margin: 3px 0;
             }
 
-            .mobile-section-nav {
-                display: flex;
-                position: sticky;
-                top: 0;
-                z-index: 1000;
+            .news-body p {
+                margin: 0;
+            }
 
+            .news-image {
                 width: 100%;
-                padding: 3px 6px;
-                gap: 3px;
-
-                background: #212529;
-                box-sizing: border-box;
+                height: auto;
+                aspect-ratio: 16 / 9;
+                object-fit: cover;
+                max-height: 180px;
             }
 
-            .mobile-section-nav a {
-                flex: 1 1 0;
-                min-width: 0;
-
-                color: white;
-                text-decoration: none;
-                text-align: center;
-
-                font-size: 11px;
-                line-height: 1.2;
-
-                padding: 6px 2px;
-
-                white-space: nowrap;
-                overflow: hidden;
+            .news-published {
+                font-size: 9px !important;
+                line-height: 1.1;
+                margin-top: 3px;
+                padding-top: 3px !important;
             }
+
+            .news-published p {
+                font-size: 9px !important;
+                margin: 1px !important;
+            }
+
+            .article-count {
+                font-size: 10px;
+                margin: 3px 0 5px 0;
+            }
+
+            hr {
+                margin: 3px 0 !important;
+            }
+        }
+
         }
 
         .article-count {
