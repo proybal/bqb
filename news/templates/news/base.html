@@ -61,55 +61,43 @@
     {% block style %}
     {% endblock style %}
     <style>
-<style>
-    @media (max-width: 767px) {
+        @media (max-width: 767px) {
 
-        html,
-        body {
-            width: 100%;
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                overflow-x: hidden;
+            }
+
+            .news-swipe-row {
+                display: block !important;
+                width: 100%;
+                max-width: 100%;
+
+                margin: 0 !important;
+                padding: 0 !important;
+
+                overflow-x: hidden !important;
+                overflow-y: visible;
+
+                scroll-snap-type: none !important;
+            }
+
+            .news-swipe-card {
+                display: block;
+                width: 100% !important;
+                max-width: 100% !important;
+
+                margin: 0 !important;
+                padding: 0 !important;
+
+                flex: none !important;
+                scroll-snap-align: none !important;
+            }
         }
-
-        .news-swipe-row {
-            display: flex;
-            flex-wrap: nowrap;
-            align-items: flex-start;
-
-            width: 100%;
-            max-width: 100%;
-
-            overflow-x: auto;
-            overflow-y: hidden;
-
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-
-            gap: 0;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .news-swipe-row::-webkit-scrollbar {
-            display: none;
-        }
-
-        .news-swipe-card {
-            flex: 0 0 100%;
-            width: 100%;
-            max-width: 100%;
-
-            padding: 0 !important;
-            margin: 0 !important;
-
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
-        }
-    }
-</style>
     </style>
 </head>
 
