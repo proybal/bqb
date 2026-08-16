@@ -55,6 +55,16 @@
             }
         }
 
+        .source-thumbnail {
+            width: 70px;
+            height: 70px;
+            max-width: 70px;
+            max-height: 70px;
+            object-fit: cover;
+            margin-right: 5px;
+        }
+
+
         /* Screen larger than 600px? 2 column */
         @media (min-width: 600px) {
             .cards {
@@ -83,59 +93,37 @@
 
         /* Mobile news cards */
 
-        @media (max-width: 767px) {
+@media (max-width: 767px) {
 
-            .source-thumbnail {
-                width: 24px !important;
-                height: 24px !important;
-                max-width: 24px !important;
-                max-height: 24px !important;
+    .source-thumbnail {
+        width: 24px !important;
+        height: 24px !important;
+        max-width: 24px !important;
+        max-height: 24px !important;
+        margin: 0 4px 0 0 !important;
+        padding: 0 !important;
+    }
 
-                object-fit: cover;
-                margin: 0 4px 0 0 !important;
-                padding: 0 !important;
-                border: 1px solid #777;
-            }
+    .news-item {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
 
-            .news-title {
-                font-size: 10px !important;
-                line-height: 1.1 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
+        padding: 4px !important;
+        margin: 0 !important;
 
-            .news-title h5 {
-                font-size: 9px !important;
-                line-height: 1 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
 
-            .news-body {
-                font-size: 9px !important;
-                line-height: 1.15 !important;
-            }
-
-            .news-published,
-            .news-published p {
-                font-size: 7px !important;
-            }
-        }
-
-        @media (max-width: 767px) {
-
-            .news-item {
-                border: none !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-            }
-
-            .news-image {
-                border: none !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-            }
-        }
+    .news-image {
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+}
 
         .article-count {
             color: lightgray;
@@ -256,11 +244,11 @@
         <div class="row news-swipe-row">
             {% for n in news %}
                 <div class="col-sm-6 col-md-4 col-lg-3 mb-5 bg-gradient news-swipe-card">
-                    <div class="news-item d-flex flex-column">
+                    <div class="news-item bg-body h-100 mx-auto p-3 rounded-5 d-flex flex-column">
                         <div class="news-title clearfix content-heading">
                             <span>
                                 <a href="{{ n.source_url }}">
-                                    <img class="source-thumbnail pull-left rounded"
+                                    <img class="source-thumbnail pull-left thumbnail rounded"
                                          src="{{ MEDIA_URL }}{{ n.thumbnail }}"
                                          loading="lazy"
                                          alt="{{ n.source }}">
