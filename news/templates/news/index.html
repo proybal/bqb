@@ -96,7 +96,7 @@
                 min-height: 0 !important;
                 max-height: none !important;
 
-                padding: 0 !important;
+                padding: 4px !important;
                 margin: 0 !important;
 
                 background: transparent !important;
@@ -114,33 +114,39 @@
 
             .news-title h5 {
                 font-size: 9px !important;
+                line-height: 1;
                 margin: 0 !important;
                 padding: 0 !important;
             }
 
             .news-title img {
-                width: 22px !important;
-                height: 22px !important;
-                max-width: 22px !important;
-                max-height: 22px !important;
-                margin-right: 3px !important;
+                width: 24px !important;
+                height: 24px !important;
+                max-width: 24px !important;
+                max-height: 24px !important;
+                margin: 0 4px 0 0 !important;
             }
 
             .news-image {
                 display: block;
                 width: 100% !important;
-                max-width: none !important;
+                max-width: 100% !important;
                 height: auto !important;
                 max-height: none !important;
                 aspect-ratio: auto !important;
                 object-fit: cover;
                 margin: 2px 0 !important;
+                border-radius: 0 !important;
             }
 
             .news-body {
                 font-size: 9px !important;
                 line-height: 1.15;
                 margin: 2px 0 !important;
+            }
+
+            .news-body p {
+                margin: 0 !important;
             }
 
             .news-published,
@@ -150,16 +156,19 @@
                 margin: 1px 0 !important;
             }
 
+            .article-count,
+            .created-by {
+                display: none !important;
+            }
+
             hr {
                 margin: 2px 0 !important;
             }
         }
 
         .article-count {
-            display: none !important;
             color: lightgray;
-        }
-    </style>
+        }    </style>
 {% endblock style %}
 
 {% block script %}
@@ -226,8 +235,12 @@
         // Truncate text for all elements with class "news-body"
         window.addEventListener("load", function () {
             var elements = document.getElementsByClassName("news-body");
+
+            // Shorter excerpts on mobile
+            var maxWords = window.innerWidth <= 767 ? 12 : 30;
+
             for (var i = 0; i < elements.length; i++) {
-                truncateText(elements[i], 30); // Limit to 100 words
+                truncateText(elements[i], maxWords);
             }
         });
     </script>
@@ -263,7 +276,7 @@
             </div>
         </div>
     {% endif %}
-    <div class="container-fluid px-2 px-lg-5">
+    <div class="container-fluid px-0 px-lg-5">
         <div><h5 class="article-count">{{ news|length }} Articles in {{ category }} News</h5></div>
         <div class="row news-swipe-row">
             {% for n in news %}
@@ -321,12 +334,5 @@
         </div>
     </div>
     <div class="go-to-top" id="goToTopButton">&uarr;</div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            })
-        });
-    </script>
+
 {% endblock %}

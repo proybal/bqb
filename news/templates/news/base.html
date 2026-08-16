@@ -61,82 +61,56 @@
     {% block style %}
     {% endblock style %}
     <style>
-        /* Shared mobile horizontal swipe */
-        @media (max-width: 767px) {
+<style>
+    @media (max-width: 767px) {
 
-            html,
-            body {
-                max-width: 100%;
-                overflow-x: hidden;
-            }
+        html,
+        body {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
 
-            body {
-                font-size: 14px;
-            }
+        .news-swipe-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-start;
 
-            .news-title {
-                font-size: 16px;
-                line-height: 1.25;
-            }
+            width: 100%;
+            max-width: 100%;
 
-            .news-body {
-                font-size: 14px;
-                line-height: 1.35;
-            }
+            overflow-x: auto;
+            overflow-y: hidden;
 
-            .news-swipe-row {
-                display: flex;
-                flex-wrap: nowrap;
-                align-items: flex-start;
-                overflow-x: auto;
-                overflow-y: hidden;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
 
-                gap: 8px;
-                margin: 0 !important;
+            gap: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
 
-                /* More space before first card */
-                padding: 0 8px 6px 14px;
-            }
+        .news-swipe-row::-webkit-scrollbar {
+            display: none;
+        }
 
-            .news-swipe-row {
-                display: flex;
-                flex-wrap: nowrap;
-                align-items: flex-start;
-                overflow-x: auto;
-                overflow-y: hidden;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
+        .news-swipe-card {
+            flex: 0 0 100%;
+            width: 100%;
+            max-width: 100%;
 
-                gap: 0;
-                margin: 0 !important;
-                padding: 0 6px 6px 6px;
-            }
+            padding: 0 !important;
+            margin: 0 !important;
 
-            .news-swipe-card {
-                flex: 0 0 calc(100% - 12px);
-                width: calc(100% - 12px);
-                max-width: calc(100% - 12px);
-            }
-
-            .news-item {
-                width: 100%;
-                height: auto !important;
-                min-height: 0 !important;
-                padding: 3px 5px !important;
-                margin: 0 !important;
-            }
-
-            .news-image {
-                width: 100%;
-                height: auto;
-                aspect-ratio: 4 / 3;
-                object-fit: cover;
-            }
-        }    </style>
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+    }
+</style>
+    </style>
 </head>
 
 
@@ -188,97 +162,6 @@
     });
 </script>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-
-        if (window.innerWidth > 767) {
-            return;
-        }
-
-        const sections = [
-            "/news/",
-            "/news/bt_region/Albuquerque/",
-            "/news/by_region/Politics/",
-            "/news/sources/"
-        ];
-        const currentPath = window.location.pathname;
-
-        let currentIndex = sections.findIndex(function (path) {
-            return currentPath === path;
-        });
-
-        if (currentIndex === -1) {
-            return;
-        }
-
-        let startX = 0;
-        let startY = 0;
-
-        document.addEventListener("touchstart", function (event) {
-            startX = event.changedTouches[0].clientX;
-            startY = event.changedTouches[0].clientY;
-        }, {passive: true});
-
-        document.addEventListener("touchend", function (event) {
-
-            const endX = event.changedTouches[0].clientX;
-            const endY = event.changedTouches[0].clientY;
-
-            const deltaX = endX - startX;
-            const deltaY = endY - startY;
-
-            const minimumSwipe = 120;
-
-            // Ignore horizontal gestures.
-            // Those belong to article/source card paging.
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                return;
-            }
-
-            if (Math.abs(deltaY) < minimumSwipe) {
-                return;
-            }
-
-            // Swipe up -> next section
-            if (deltaY < 0) {
-
-                if (currentIndex < sections.length - 1) {
-                    window.location.href =
-                        sections[currentIndex + 1];
-                }
-
-            }
-
-            // Swipe down -> previous section
-            else {
-
-                if (currentIndex > 0) {
-                    window.location.href =
-                        sections[currentIndex - 1];
-                }
-
-            }
-        }, {passive: true});
-
-        if (currentIndex === -1) {
-            return;
-        }
-
-        if (dy < 0) {
-            // Swipe up -> next section
-            currentIndex = (currentIndex + 1) % sections.length;
-        } else {
-            // Swipe down -> previous section
-            currentIndex =
-                (currentIndex - 1 + sections.length) % sections.length;
-        }
-
-        window.location.href = sections[currentIndex];
-    }, {passive: true});
-
-    })
-    ;
-</script>
 
 </body>
 </html>
