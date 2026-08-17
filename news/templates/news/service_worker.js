@@ -10,8 +10,8 @@ const OFFLINE_NEWS_URL = "/offline-news/";
 
 const STATIC_FILES = [
     OFFLINE_URL,
-    "/static/news/pwa/icon-192.png",
-    "/static/news/pwa/icon-512.png",
+    "/static/news/pwa/icon-192-v2.png",
+    "/static/news/pwa/icon-512-v2.png",
     "/static/news/pwa/maskable-icon-512-v2.png",
     "/static/news/pwa/apple-touch-icon.png",
     "/static/news/pwa/favicon-32.png",
