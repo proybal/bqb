@@ -416,6 +416,13 @@
 
 </div>
 
+<div id="mobile-section-links"
+     data-nm="{% url 'state_news' %}"
+     data-abq="{% url 'by_region' 'Albuquerque' %}"
+     data-politics="{% url 'by_region' 'Politics' %}"
+     data-sources="{% url 'sources' %}"
+     style="display:none;">
+</div>
 
 <script type="text/javascript">
 
@@ -497,4 +504,78 @@
         });
     }
 
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    if (window.innerWidth > 767) {
+        return;
+    }
+
+    const nav = document.getElementById("mobile-section-links");
+
+    if (!nav) {
+        return;
+    }
+
+    const sections = [
+        nav.dataset.nm,
+        nav.dataset.abq,
+        nav.dataset.politics,
+        nav.dataset.sources
+    ];
+
+    let startX = 0;
+    let startY = 0;
+
+    document.addEventListener("touchstart", function (event) {
+        startX = event.changedTouches[0].clientX;
+        startY = event.changedTouches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener("touchend", function (event) {
+
+        const endX = event.changedTouches[0].clientX;
+        const endY = event.changedTouches[0].clientY;
+
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const minimumSwipe = 80;
+
+        // Only react to a clear horizontal swipe.
+        // Vertical movement remains normal scrolling.
+        if (Math.abs(dx) <= Math.abs(dy)) {
+            return;
+        }
+
+        if (Math.abs(dx) < minimumSwipe) {
+            return;
+        }
+
+        const currentPath = window.location.pathname;
+
+        let currentIndex = sections.findIndex(function (url) {
+            return currentPath === url;
+        });
+
+        // If we're on another page, start from NM.
+        if (currentIndex === -1) {
+            currentIndex = 0;
+        }
+
+        if (dx < 0) {
+            // Swipe left -> next section
+            currentIndex =
+                (currentIndex + 1) % sections.length;
+        } else {
+            // Swipe right -> previous section
+            currentIndex =
+                (currentIndex - 1 + sections.length)
+                % sections.length;
+        }
+
+        window.location.href = sections[currentIndex];
+    }, { passive: true });
+
+});
 </script>
