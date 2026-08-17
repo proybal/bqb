@@ -78,7 +78,14 @@
         white-space: nowrap;
     }
 }
+@media (max-width: 767px) {
+
+    .mobile-section-nav a.active {
+        color: white !important;
+        border-bottom: 2px solid white;
+        padding-bottom: 2px;
     }
+}
 </style>
 
 
@@ -387,19 +394,23 @@
 <!-- Mobile Navigation -->
 <div class="mobile-section-nav">
 
-    <a href="{% url 'state_news' %}">
-        NM News
+     <a href="{% url 'state_news' %}"
+       class="{% if request.resolver_match.url_name == 'state_news' %}active{% endif %}">
+        NM
     </a>
 
-    <a href="{% url 'by_region' 'Albuquerque' %}">
+    <a href="{% url 'by_city' 'Albuquerque' %}"
+       class="{% if request.resolver_match.url_name == 'by_city' and request.resolver_match.kwargs.city == 'Albuquerque' %}active{% endif %}">
         ABQ
     </a>
 
-    <a href="{% url 'by_region' 'Politics' %}">
+    <a href="{% url 'by_region' 'Politics' %}"
+       class="{% if request.resolver_match.url_name == 'by_region' and request.resolver_match.kwargs.region == 'Politics' %}active{% endif %}">
         POLITICS
     </a>
 
-    <a href="{% url 'sources' %}">
+    <a href="{% url 'sources' %}"
+       class="{% if request.resolver_match.url_name == 'sources' %}active{% endif %}">
         SOURCES
     </a>
 
