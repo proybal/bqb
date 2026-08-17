@@ -4,53 +4,134 @@
 News Sources | BurqueBro
 {% endblock title %}
 
+{% block style %}
+<style>
+
+    .sources-heading {
+        margin-bottom: 1.5rem;
+    }
+
+    .source-card-image {
+        height: 120px;
+        object-fit: contain;
+        padding: 10px;
+    }
+
+    @media (max-width: 767px) {
+
+        .sources-container {
+            width: 100%;
+            max-width: 100%;
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+
+        .sources-heading {
+            font-size: 12px !important;
+            line-height: 1;
+            margin: 4px 0 6px 0 !important;
+        }
+
+        .source-card {
+            height: auto !important;
+            min-height: 0 !important;
+
+            margin: 0 0 4px 0 !important;
+            padding: 0 !important;
+
+            border-radius: 0 !important;
+        }
+
+        .source-card-image {
+            display: block;
+
+            width: 100% !important;
+            height: 50px !important;
+            max-height: 50px !important;
+
+            object-fit: contain !important;
+
+            margin: 0 !important;
+            padding: 2px !important;
+        }
+
+        .source-card .card-body {
+            padding: 3px 4px !important;
+        }
+
+        .source-card .card-title {
+            font-size: 9px !important;
+            line-height: 1.05 !important;
+
+            margin: 0 0 2px 0 !important;
+            padding: 0 !important;
+        }
+
+        .source-card .card-text {
+            font-size: 7px !important;
+            line-height: 1 !important;
+
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+
+</style>
+{% endblock style %}
+
+
 {% block body %}
 
-<div class="container">
+<div class="container sources-container">
 
-    <h1 class="mb-4">News Sources</h1>
+    <h1 class="sources-heading">
+        News Sources
+    </h1>
 
     <div class="row news-swipe-row">
 
         {% for source in news_sources %}
 
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 news-swipe-card">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 news-swipe-card">
 
-            <a href="{% url 'by_source' source.code %}"
-               class="text-decoration-none">
+                <a href="{% url 'by_source' source.code %}"
+                   class="text-decoration-none">
 
-                <div class="card h-100">
+                    <div class="card h-100 source-card">
 
-                    {% if source.cover %}
-                    <img
-                        src="{{ source.cover.url }}"
-                        class="card-img-top"
-                        alt="{{ source.title }}"
-                        style="height: 120px; object-fit: contain; padding: 10px;">
-                    {% endif %}
+                        {% if source.cover %}
+                            <img
+                                src="{{ source.cover.url }}"
+                                class="card-img-top source-card-image"
+                                alt="{{ source.title }}">
+                        {% endif %}
 
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            {{ source.title }}
-                        </h5>
+                        <div class="card-body">
 
-                        <p class="card-text text-muted">
-                            {% if source.city %}
-                                {{ source.city }}
-                            {% endif %}
+                            <h5 class="card-title">
+                                {{ source.title }}
+                            </h5>
 
-                            {% if source.state %}
-                                {% if source.city %}, {% endif %}
-                                {{ source.state }}
-                            {% endif %}
-                        </p>
+                            <p class="card-text text-muted">
+
+                                {% if source.city %}
+                                    {{ source.city }}
+                                {% endif %}
+
+                                {% if source.state %}
+                                    {% if source.city %}, {% endif %}
+                                    {{ source.state }}
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
                     </div>
 
-                </div>
+                </a>
 
-            </a>
-
-        </div>
+            </div>
 
         {% endfor %}
 
