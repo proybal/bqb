@@ -2,8 +2,8 @@
 /* jshint -W097 */
 /* global caches, clients, Promise */
 
-const STATIC_CACHE = "burquebro-static-v6";
-const CONTENT_CACHE = "burquebro-content-v7";
+const STATIC_CACHE = "burquebro-static-v7";
+const CONTENT_CACHE = "burquebro-content-v8";
 
 const OFFLINE_URL = "/offline/";
 const OFFLINE_NEWS_URL = "/offline-news/";
@@ -12,7 +12,7 @@ const STATIC_FILES = [
     OFFLINE_URL,
     "/static/news/pwa/icon-192.png",
     "/static/news/pwa/icon-512.png",
-    "/static/news/pwa/maskable-icon-512.png",
+    "/static/news/pwa/maskable-icon-512-v2.png",
     "/static/news/pwa/apple-touch-icon.png",
     "/static/news/pwa/favicon-32.png",
     "/static/news/pwa/favicon-16.png"
