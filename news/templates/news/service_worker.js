@@ -2,8 +2,8 @@
 /* jshint -W097 */
 /* global caches, clients, Promise */
 
-const STATIC_CACHE = "burquebro-static-v7";
-const CONTENT_CACHE = "burquebro-content-v8";
+const STATIC_CACHE = "burquebro-static-v8";
+const CONTENT_CACHE = "burquebro-content-v9";
 
 const OFFLINE_URL = "/offline/";
 const OFFLINE_NEWS_URL = "/offline-news/";
