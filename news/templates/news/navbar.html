@@ -394,13 +394,13 @@
 <!-- Mobile Navigation -->
 <div class="mobile-section-nav">
 
-     <a href="{% url 'state_news' %}"
+    <a href="{% url 'state_news' %}"
        class="{% if request.resolver_match.url_name == 'state_news' %}active{% endif %}">
         NM
     </a>
 
     <a href="{% url 'by_region' 'Albuquerque' %}"
-       class="{% if request.resolver_match.url_name == 'by_region' and request.resolver_match.kwargs.city == 'Albuquerque' %}active{% endif %}">
+       class="{% if request.resolver_match.url_name == 'by_region' and request.resolver_match.kwargs.region == 'Albuquerque' %}active{% endif %}">
         ABQ
     </a>
 
