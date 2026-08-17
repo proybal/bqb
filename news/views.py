@@ -370,7 +370,6 @@ def by_source(request, code):
     # Do NOT diversify a single-source page.
     news = truncate_news_body(source_news)
 
-
     return render(
         request,
         "news/index.html",
@@ -414,6 +413,7 @@ def latest_news(request):
             "news": latest,
         },
     )
+
 
 def scrape_news():
     def scrape_rss(news_source):
@@ -1681,7 +1681,25 @@ def scrape_news():
                 get_value(tag, "a", attr="href")
             )
 
-            published = get_date(tag, 'span', 'updated')
+            news_soup = get_soup(url)
+            if not news_soup:
+                continue
+
+            published = (
+                    get_meta(
+                        news_soup,
+                        {"property": "article:published_time"}
+                    )
+                    or get_meta(
+                news_soup,
+                {"name": "pubdate"}
+            )
+                    or get_date(
+                news_soup,
+                "time",
+                attr="datetime"
+            )
+            )
 
             a_tag = tag.find('a', rel="author")
             if a_tag:
@@ -1690,7 +1708,13 @@ def scrape_news():
             else:
                 author = ""
 
-            updated = ""
+            updated = (
+                    get_meta(
+                        news_soup,
+                        {"property": "article:modified_time"}
+                    )
+                    or ""
+            )
 
             add_article(title, body, author, published, updated, url, img)
 
@@ -2463,16 +2487,20 @@ def scrape_news():
 
     # Format datetime objects as strings in the desired format
     for item in news:
-        original_date_string = item['published']
-        original_date = datetime.strptime(original_date_string, "%Y-%m-%dT%H:%M:%S")
-        new_date_string = original_date.strftime("%A, %B %d, %Y %I:%M%p")
-        item['published'] = new_date_string
-        if item['updated']:
-            original_date_string = item['updated']
-            original_date = datetime.strptime(original_date_string, "%Y-%m-%dT%H:%M:%S")
-            new_date_string = original_date.strftime("%A, %B %d, %Y %I:%M%p")
-            item['updated'] = new_date_string
+        original_date_string = item["published"]
+        original_date = parse(original_date_string)
+        new_date_string = original_date.strftime(
+            "%A, %B %d, %Y %I:%M%p"
+        )
+        item["published"] = new_date_string
 
+        if item["updated"]:
+            original_date_string = item["updated"]
+            original_date = parse(original_date_string)
+            new_date_string = original_date.strftime(
+                "%A, %B %d, %Y %I:%M%p"
+            )
+            item["updated"] = new_date_string
     news_json_path = os.path.join(
         settings.BQB_URL,
         "news.json",
