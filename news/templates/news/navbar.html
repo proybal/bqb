@@ -2,12 +2,12 @@
 {% load custom_tags %}
 
 <style>
-/* Desktop sticky navbar */
-.navbar {
-    position: sticky;
-    top: 0;
-    z-index: 1050;
-}
+    /* Desktop sticky navbar */
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1050;
+    }
 
     .navbar-toggler {
         color: lightblue !important;
@@ -46,9 +46,10 @@
     }
 
     .mobile-top {
+        display: block !important;
         position: sticky;
         top: 0;
-        z-index: 1050;
+        z-index: 9999;
         width: 100%;
     }
 
@@ -59,41 +60,15 @@
         padding: 2px;
     }
 
-    .mobile-brand a {
-        color: white;
-        text-decoration: none;
-        font-size: 12px;
-        line-height: 1;
-        font-weight: 600;
-    }
-
     .mobile-section-nav {
         display: flex;
         position: static;
-
         width: 100%;
         height: 24px;
-
         align-items: center;
         justify-content: space-around;
-
         background: #212529;
         padding: 0 4px;
-    }
-
-    .mobile-section-nav a {
-        color: white;
-        text-decoration: none;
-        font-size: 8px !important;
-        line-height: 1;
-        padding: 4px;
-        white-space: nowrap;
-    }
-
-    .mobile-section-nav a.active {
-        color: white !important;
-        border-bottom: 2px solid white;
-        padding-bottom: 2px;
     }
 }
 </style>
