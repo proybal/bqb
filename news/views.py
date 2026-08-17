@@ -382,27 +382,36 @@ def by_source(request, code):
     )
 
 
+from django.utils import timezone
+
+
 def latest_news(request):
     write_access_log(request, "Latest News")
 
     with open("news.json", encoding="utf-8") as json_file:
         news = json.load(json_file)
 
-    news = sorted(
-        news,
-        key=lambda item: item.get("published", ""),
+    today = timezone.localdate().isoformat()
+
+    latest = [
+        article
+        for article in news
+        if str(article.get("last_update", "")).startswith(today)
+    ]
+
+    latest.sort(
+        key=lambda article: article.get("last_update", ""),
         reverse=True,
     )
 
-    news = news[:100]
-    news = truncate_news_body(news)
+    latest = truncate_news_body(latest)
 
     return render(
         request,
         "news/index.html",
         {
             "category": "Latest",
-            "news": news,
+            "news": latest,
         },
     )
 
