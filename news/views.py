@@ -382,6 +382,30 @@ def by_source(request, code):
     )
 
 
+def latest_news(request):
+    write_access_log(request, "Latest News")
+
+    with open("news.json", encoding="utf-8") as json_file:
+        news = json.load(json_file)
+
+    news = sorted(
+        news,
+        key=lambda item: item.get("published", ""),
+        reverse=True,
+    )
+
+    news = news[:100]
+    news = truncate_news_body(news)
+
+    return render(
+        request,
+        "news/index.html",
+        {
+            "category": "Latest",
+            "news": news,
+        },
+    )
+
 def scrape_news():
     def scrape_rss(news_source):
         """

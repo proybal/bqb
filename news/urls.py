@@ -41,4 +41,9 @@ urlpatterns = [
         name="push-unsubscribe",
     ),
 
+    path(
+        "news/latest/",
+        views.latest_news,
+        name="latest_news",
+    ),
 ]

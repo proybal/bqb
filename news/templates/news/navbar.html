@@ -395,6 +395,11 @@
 <!-- Mobile Navigation -->
 <div class="mobile-section-nav">
 
+    <a href="{% url 'latest_news' %}"
+       class="{% if request.resolver_match.url_name == 'latest_news' %}active{% endif %}">
+        LATEST
+    </a>
+
     <a href="{% url 'state_news' %}"
        class="{% if request.resolver_match.url_name == 'state_news' %}active{% endif %}">
         NM
@@ -418,6 +423,7 @@
 </div>
 
 <div id="mobile-section-links"
+     data-latest="{% url 'latest_news' %}"
      data-nm="{% url 'state_news' %}"
      data-abq="{% url 'by_region' 'Albuquerque' %}"
      data-politics="{% url 'by_region' 'Politics' %}"
@@ -519,6 +525,7 @@
         }
 
         const sections = [
+            nav.dataset.latest,
             nav.dataset.nm,
             nav.dataset.abq,
             nav.dataset.politics,
