@@ -399,7 +399,7 @@
         NM
     </a>
 
-    <a href="{% url 'by_city' 'Albuquerque' %}"
+    <a href="{% url 'by_region' 'Albuquerque' %}"
        class="{% if request.resolver_match.url_name == 'by_region' and request.resolver_match.kwargs.city == 'Albuquerque' %}active{% endif %}">
         ABQ
     </a>
