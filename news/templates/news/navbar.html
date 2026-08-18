@@ -39,84 +39,84 @@
         display: none;
     }
 
-@media (max-width: 767px) {
+    @media (max-width: 767px) {
 
-    .navbar {
-        display: none !important;
-    }
+        .navbar {
+            display: none !important;
+        }
 
-    .mobile-top {
-        display: block !important;
-        position: sticky;
-        top: 0;
-        z-index: 9999;
-        width: 100%;
-        background: #212529;
-    }
+        .mobile-top {
+            display: block !important;
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            width: 100%;
+            background: #212529;
+        }
 
-    /* BurqueBro / NM News banner */
-    .mobile-brand {
-        display: block !important;
-        width: 100%;
-        text-align: center;
-        background: #0d6efd;
-        padding: 3px 4px;
-        min-height: 20px;
-    }
+        /* BurqueBro / NM News banner */
+        .mobile-brand {
+            display: block !important;
+            width: 100%;
+            text-align: center;
+            background: #0d6efd;
+            padding: 3px 4px;
+            min-height: 20px;
+        }
 
-    .mobile-brand a {
-        display: block;
-        color: white !important;
-        text-decoration: none;
-        font-size: 11px !important;
-        line-height: 14px;
-        font-weight: 600;
-    }
+        .mobile-brand a {
+            display: block;
+            color: white !important;
+            text-decoration: none;
+            font-size: 11px !important;
+            line-height: 14px;
+            font-weight: 600;
+        }
 
-    /* Mobile section links */
-    .mobile-section-nav {
-        display: flex !important;
-        position: static;
-        width: 100%;
-        min-height: 28px;
+        /* Mobile section links */
+        .mobile-section-nav {
+            display: flex !important;
+            position: static;
+            width: 100%;
+            min-height: 28px;
 
-        align-items: center;
-        justify-content: flex-start;
+            align-items: center;
+            justify-content: flex-start;
 
-        gap: 14px;
-        padding: 0 10px;
+            gap: 14px;
+            padding: 0 10px;
 
-        background: #212529;
+            background: #212529;
 
-        overflow-x: auto;
-        overflow-y: hidden;
-        white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
 
-        scrollbar-width: none;
-    }
+            scrollbar-width: none;
+        }
 
-    .mobile-section-nav::-webkit-scrollbar {
-        display: none;
-    }
+        .mobile-section-nav::-webkit-scrollbar {
+            display: none;
+        }
 
-    .mobile-section-nav a {
-        flex: 0 0 auto;
+        .mobile-section-nav a {
+            flex: 0 0 auto;
 
-        color: white !important;
-        text-decoration: none;
+            color: white !important;
+            text-decoration: none;
 
-        font-size: 10px !important;
-        line-height: 1;
+            font-size: 10px !important;
+            line-height: 1;
 
-        padding: 8px 2px 6px;
-        margin: 0;
-    }
+            padding: 8px 2px 6px;
+            margin: 0;
+        }
 
-    .mobile-section-nav a.active {
-        color: white !important;
-        border-bottom: 2px solid white;
-    }
-}</style>
+        .mobile-section-nav a.active {
+            color: white !important;
+            border-bottom: 2px solid white;
+        }
+    }</style>
 
 
 <!-- Desktop / Tablet Navbar -->
@@ -146,6 +146,14 @@
              id="navbarSupportedContent">
 
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                <!-- Latest News -->
+                <li class="nav-item">
+                    <a class="nav-link text-white h4 p-4"
+                       href="{% url 'latest_news' %}">
+                        Latest
+                    </a>
+                </li>
 
                 <!-- Albuquerque -->
                 <li class="nav-item">
