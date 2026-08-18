@@ -20,14 +20,23 @@
         font-size: 24px;
     }
 
-    /* Chaining parent classes forces the browser to prioritize your rule */
-
+    /* Desktop navbar links */
     .navbar .navbar-nav .nav-link {
-        color: red;
+        color: red !important;
+        text-decoration: none !important;
     }
 
+    /* Hover - larger text, NO underline */
+    .navbar .navbar-nav .nav-link:hover,
+    .navbar .navbar-nav .nav-link:focus {
+        color: white !important;
+        text-decoration: none !important;
+    }
+
+    /* Selected page only gets our border underline */
     .navbar .navbar-nav .nav-link.active {
-        color: red;
+        border-bottom: 3px solid red;
+        text-decoration: none !important;
     }
 
     .modal-p {
@@ -153,25 +162,25 @@
 
                 <!-- Latest News -->
                 <li class="nav-item">
-                    <a class="nav-link  h4 p-4"
+                    <a class="nav-link h4 p-4
+       {% if request.resolver_match.url_name == 'latest_news' %}active{% endif %}"
                        href="{% url 'latest_news' %}">
                         LATEST
                     </a>
                 </li>
-
                 <!-- Albuquerque -->
                 <li class="nav-item">
-                    <a class="nav-link active h4 p-4"
-                       aria-current="page"
+                    <a class="nav-link h4 p-4
+       {% if request.resolver_match.url_name == 'by_region' and request.resolver_match.kwargs.region == 'Albuquerque' %}active{% endif %}"
                        href="{% url 'by_region' 'Albuquerque' %}">
                         ABQ
                     </a>
                 </li>
-
                 <!-- Regions -->
                 <li class="nav-item dropdown">
 
-                    <a class="nav-link dropdown-toggle h4 ms-auto p-4"
+                    <a class="nav-link dropdown-toggle h4 ms-auto p-4
+   {% if request.resolver_match.url_name == 'by_region' and request.resolver_match.kwargs.region != 'Albuquerque' and request.resolver_match.kwargs.region != 'Politics' %}active{% endif %}"
                        href="#"
                        id="navbarDropdownServices"
                        role="button"
@@ -179,7 +188,6 @@
                        aria-expanded="false">
                         REGION
                     </a>
-
                     <ul class="dropdown-menu"
                         aria-labelledby="navbarDropdownServices">
 
@@ -223,20 +231,20 @@
 
                 <!-- Politics -->
                 <li class="nav-item">
-                    <a class="resetSearch nav-link h4 p-4"
+                    <a class="resetSearch nav-link h4 p-4
+       {% if request.resolver_match.url_name == 'by_region' and request.resolver_match.kwargs.region == 'Politics' %}active{% endif %}"
                        href="{% url 'by_region' 'Politics' %}">
                         POLITICS
                     </a>
                 </li>
-
                 <!-- Sources -->
                 <li class="nav-item">
-                    <a class="nav-link h4 p-4"
+                    <a class="nav-link h4 p-4
+       {% if request.resolver_match.url_name == 'sources' %}active{% endif %}"
                        href="{% url 'sources' %}">
                         SOURCES
                     </a>
                 </li>
-
                 <!-- About -->
                 <li class="nav-item">
 
